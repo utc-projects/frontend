@@ -1,5 +1,32 @@
 import { useState, useEffect } from 'react';
-import { X, Save, Plus, Trash2, ArrowUp, ArrowDown, MapPin, Search, ChevronRight } from 'lucide-react';
+import { X, Plus, Trash2, MapPin, Search, ChevronRight, GripVertical } from 'lucide-react';
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+
+function SortableItem({ id, children }) {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging
+    } = useSortable({ id });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        zIndex: isDragging ? 50 : 'auto',
+        opacity: isDragging ? 0.8 : 1,
+    };
+
+    return (
+        <div ref={setNodeRef} style={style}>
+            {children(attributes, listeners)}
+        </div>
+    );
+}
 
 function RouteModal({ isOpen, onClose, onSubmit, initialData = null, availablePoints = [] }) {
     const [formData, setFormData] = useState({
@@ -11,6 +38,13 @@ function RouteModal({ isOpen, onClose, onSubmit, initialData = null, availablePo
     });
     const [searchTerm, setSearchTerm] = useState('');
     const [loading, setLoading] = useState(false);
+
+    const sensors = useSensors(
+        useSensor(PointerSensor),
+        useSensor(KeyboardSensor, {
+            coordinateGetter: sortableKeyboardCoordinates,
+        })
+    );
 
     useEffect(() => {
         if (isOpen) {
@@ -57,14 +91,19 @@ function RouteModal({ isOpen, onClose, onSubmit, initialData = null, availablePo
         }));
     };
 
-    const handleMovePoint = (index, direction) => {
-        const newPoints = [...formData.points];
-        if (direction === 'up' && index > 0) {
-            [newPoints[index], newPoints[index - 1]] = [newPoints[index - 1], newPoints[index]];
-        } else if (direction === 'down' && index < newPoints.length - 1) {
-            [newPoints[index], newPoints[index + 1]] = [newPoints[index + 1], newPoints[index]];
+    const handleDragEnd = (event) => {
+        const { active, over } = event;
+
+        if (active.id !== over.id) {
+            setFormData((prev) => {
+                const oldIndex = prev.points.indexOf(active.id);
+                const newIndex = prev.points.indexOf(over.id);
+                return {
+                    ...prev,
+                    points: arrayMove(prev.points, oldIndex, newIndex),
+                };
+            });
         }
-        setFormData(prev => ({ ...prev, points: newPoints }));
     };
 
     const handleSubmit = async (e) => {
@@ -198,7 +237,7 @@ function RouteModal({ isOpen, onClose, onSubmit, initialData = null, availablePo
                                 <div className="p-3 border-b border-purple-100 bg-purple-50 flex justify-between items-center">
                                     <h4 className="font-semibold text-purple-900 text-sm flex items-center gap-2">
                                         <MapPin className="w-4 h-4" />
-                                        Điểm trong lộ trình
+                                        Điểm trong lộ trình (Kéo thả để sắp xếp)
                                     </h4>
                                     <span className="bg-purple-200 text-purple-700 text-xs font-bold px-2 py-0.5 rounded-full">
                                         {formData.points.length}
@@ -213,50 +252,55 @@ function RouteModal({ isOpen, onClose, onSubmit, initialData = null, availablePo
                                             <p className="text-xs mt-1">Chọn điểm từ danh sách bên trái</p>
                                         </div>
                                     ) : (
-                                        formData.points.map((pointId, index) => {
-                                            const point = getPointDetails(pointId);
-                                            if (!point) return null;
-                                            return (
-                                                <div key={`${pointId}-${index}`} className="flex items-center gap-2 p-3 bg-white rounded-xl border border-purple-100 shadow-sm relative group">
-                                                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-purple-100 text-purple-600 border border-purple-200 flex items-center justify-center text-xs font-bold">
-                                                        {index + 1}
-                                                    </span>
-                                                    <div className="flex-1 min-w-0">
-                                                        <p className="text-sm font-semibold text-slate-700 truncate">{point.name}</p>
-                                                        <p className="text-xs text-slate-500">{point.category}</p>
-                                                    </div>
+                                        <DndContext
+                                            sensors={sensors}
+                                            collisionDetection={closestCenter}
+                                            onDragEnd={handleDragEnd}
+                                        >
+                                            <SortableContext
+                                                items={formData.points}
+                                                strategy={verticalListSortingStrategy}
+                                            >
+                                                {formData.points.map((pointId, index) => {
+                                                    const point = getPointDetails(pointId);
+                                                    if (!point) return null;
+                                                    return (
+                                                        <SortableItem key={pointId} id={pointId}>
+                                                            {(attributes, listeners) => (
+                                                                <div className="flex items-center gap-2 p-3 bg-white rounded-xl border border-purple-100 shadow-sm relative group">
+                                                                    <div
+                                                                        {...attributes}
+                                                                        {...listeners}
+                                                                        className="text-slate-300 hover:text-slate-500 cursor-grab active:cursor-grabbing p-1 -ml-1 border-r border-slate-100 mr-2"
+                                                                        title="Kéo để thả"
+                                                                    >
+                                                                        <GripVertical className="w-4 h-4" />
+                                                                    </div>
+                                                                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-purple-100 text-purple-600 border border-purple-200 flex items-center justify-center text-xs font-bold">
+                                                                        {index + 1}
+                                                                    </span>
+                                                                    <div className="flex-1 min-w-0">
+                                                                        <p className="text-sm font-semibold text-slate-700 truncate">{point.name}</p>
+                                                                        <p className="text-xs text-slate-500">{point.category}</p>
+                                                                    </div>
 
-                                                    {/* Actions */}
-                                                    <div className="flex items-center gap-1">
-                                                        <div className="flex flex-col gap-0.5">
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => handleMovePoint(index, 'up')}
-                                                                disabled={index === 0}
-                                                                className="p-0.5 text-slate-400 hover:text-purple-600 disabled:opacity-30"
-                                                            >
-                                                                <ArrowUp className="w-3 h-3" />
-                                                            </button>
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => handleMovePoint(index, 'down')}
-                                                                disabled={index === formData.points.length - 1}
-                                                                className="p-0.5 text-slate-400 hover:text-purple-600 disabled:opacity-30"
-                                                            >
-                                                                <ArrowDown className="w-3 h-3" />
-                                                            </button>
-                                                        </div>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => handleRemovePoint(index)}
-                                                            className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors ml-1"
-                                                        >
-                                                            <Trash2 className="w-4 h-4" />
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            );
-                                        })
+                                                                    {/* Actions */}
+                                                                    <div className="flex items-center gap-1">
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => handleRemovePoint(index)}
+                                                                            className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors ml-1"
+                                                                        >
+                                                                            <Trash2 className="w-4 h-4" />
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                            )}
+                                                        </SortableItem>
+                                                    );
+                                                })}
+                                            </SortableContext>
+                                        </DndContext>
                                     )}
                                 </div>
                             </div>
