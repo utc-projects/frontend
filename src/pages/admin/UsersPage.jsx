@@ -35,7 +35,6 @@ function UsersPage() {
         role: 'student',
         department: 'Khoa Du lịch',
         studentId: '',
-        studentId: '',
     });
 
     useEffect(() => {
@@ -77,7 +76,6 @@ function UsersPage() {
                 role: user.role || 'student',
                 department: user.department || 'Khoa Du lịch',
                 studentId: user.studentId || '',
-                studentId: user.studentId || '',
             });
         } else {
             setEditingUser(null);
@@ -88,7 +86,6 @@ function UsersPage() {
                 confirmPassword: '',
                 role: 'student',
                 department: 'Khoa Du lịch',
-                studentId: '',
                 studentId: '',
             });
         }
@@ -116,7 +113,6 @@ function UsersPage() {
                     role: formData.role,
                     department: formData.department,
 
-                    studentId: formData.studentId,
                     studentId: formData.studentId,
                 };
                 await api.put(`/auth/users/${editingUser._id}`, updateData);

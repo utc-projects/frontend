@@ -1,8 +1,8 @@
 import api from './api';
 
 // Get all tourism points as GeoJSON
-export const getPoints = async () => {
-  const response = await api.get('/points');
+export const getPoints = async (params = {}) => {
+  const response = await api.get('/points', { params });
   return response.data;
 };
 

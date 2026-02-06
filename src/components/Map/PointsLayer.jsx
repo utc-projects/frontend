@@ -1,8 +1,10 @@
-import { GeoJSON, Popup } from 'react-leaflet';
+import { GeoJSON } from 'react-leaflet';
+import { useEffect, useRef } from 'react';
+import L from 'leaflet';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 
-function PointsLayer({ data }) {
+function PointsLayer({ data, selectedLocation }) {
   const pointStyle = (feature) => {
     const categoryColors = {
       'Tự nhiên': '#22c55e',
@@ -24,6 +26,9 @@ function PointsLayer({ data }) {
 
   const onEachFeature = (feature, layer) => {
     const props = feature.properties;
+    // ... popup content logic is huge so I don't want to replace it all if I can avoid it.
+    // OPTIMIZATION: I will just replace the top and bottom of the file.
+
 
     const popupContent = `
       <div class="point-popup" style="min-width: 280px; font-family: system-ui, sans-serif;">
@@ -121,13 +126,30 @@ function PointsLayer({ data }) {
     return L.circleMarker(latlng, pointStyle(feature));
   };
 
+  const geoJsonRef = useRef(null);
+
+  useEffect(() => {
+    if (selectedLocation && selectedLocation.type === 'point' && geoJsonRef.current) {
+      const layers = geoJsonRef.current.getLayers();
+      const targetLayer = layers.find(layer =>
+        layer.feature && layer.feature.properties._id === selectedLocation.item.properties._id
+      );
+
+      if (targetLayer) {
+        targetLayer.openPopup();
+      }
+    }
+  }, [selectedLocation]);
+
   return (
     <GeoJSON
+      ref={geoJsonRef}
       data={data}
       pointToLayer={pointToLayer}
       onEachFeature={onEachFeature}
     />
   );
 }
+
 
 export default PointsLayer;

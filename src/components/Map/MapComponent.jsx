@@ -23,7 +23,7 @@ L.Icon.Default.mergeOptions({
 });
 
 // Component to handle map events and flying to location
-function MapController({ selectedRoute, routes }) {
+function MapController({ selectedRoute, routes, selectedLocation }) {
     const map = useMap();
 
     useEffect(() => {
@@ -40,7 +40,15 @@ function MapController({ selectedRoute, routes }) {
         }
     }, [selectedRoute, routes, map]);
 
-    return null;
+    useEffect(() => {
+        if (selectedLocation) {
+            map.flyTo([selectedLocation.lat, selectedLocation.lng], 16, {
+                duration: 2,
+                easeLinearity: 0.25
+            });
+        }
+    }, [selectedLocation, map]);
+
     return null;
 }
 
@@ -135,7 +143,7 @@ const MediaViewer = ({ items, initialIndex, onClose }) => {
     );
 };
 
-function MapComponent({ selectedRoute, onRouteSelect }) {
+function MapComponent({ selectedRoute, onRouteSelect, selectedLocation }) {
     const [points, setPoints] = useState(null);
     const [routes, setRoutes] = useState([]);
     const [routesGeoJSON, setRoutesGeoJSON] = useState(null);
@@ -184,7 +192,6 @@ function MapComponent({ selectedRoute, onRouteSelect }) {
         };
 
         fetchData();
-        fetchData();
     }, []);
 
     // Listen for custom media viewer events from Popup
@@ -228,7 +235,7 @@ function MapComponent({ selectedRoute, onRouteSelect }) {
                     url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
                 />
 
-                <MapController selectedRoute={selectedRoute} routes={routes} />
+                <MapController selectedRoute={selectedRoute} routes={routes} selectedLocation={selectedLocation} />
 
                 {/* Routes Layer - show all when enabled, or just selected when disabled but route is selected */}
                 {(layers.routes || selectedRoute) && routesGeoJSON && (
@@ -244,7 +251,7 @@ function MapComponent({ selectedRoute, onRouteSelect }) {
 
                 {/* Points Layer */}
                 {layers.points && points && (
-                    <PointsLayer data={points} />
+                    <PointsLayer data={points} selectedLocation={selectedLocation} />
                 )}
 
                 {/* Route Start/End Markers */}
@@ -255,6 +262,7 @@ function MapComponent({ selectedRoute, onRouteSelect }) {
                     <ProvidersLayer
                         data={providers}
                         visibleTypes={providerTypes}
+                        selectedLocation={selectedLocation}
                     />
                 )}
             </LeafletMapContainer>

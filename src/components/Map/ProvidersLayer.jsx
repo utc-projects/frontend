@@ -1,9 +1,10 @@
 import { GeoJSON } from 'react-leaflet';
+import { useEffect, useRef } from 'react';
 import L from 'leaflet';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 
-function ProvidersLayer({ data, visibleTypes }) {
+function ProvidersLayer({ data, visibleTypes, selectedLocation }) {
   // Filter features by visible types
   const filteredData = {
     ...data,
@@ -203,8 +204,29 @@ function ProvidersLayer({ data, visibleTypes }) {
     return null;
   }
 
+  const geoJsonRef = useRef(null);
+
+  useEffect(() => {
+    if (selectedLocation && selectedLocation.type === 'provider' && geoJsonRef.current) {
+      // Timeout to ensure layer render if data changed (though data usually static here)
+      setTimeout(() => {
+        if (geoJsonRef.current) {
+          const layers = geoJsonRef.current.getLayers();
+          const targetLayer = layers.find(layer =>
+            layer.feature && layer.feature.properties._id === selectedLocation.item.properties._id
+          );
+
+          if (targetLayer) {
+            targetLayer.openPopup();
+          }
+        }
+      }, 100);
+    }
+  }, [selectedLocation, visibleTypes]);
+
   return (
     <GeoJSON
+      ref={geoJsonRef}
       key={Object.entries(visibleTypes).filter(([k, v]) => v).map(([k]) => k).join('-')}
       data={filteredData}
       pointToLayer={pointToLayer}
