@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import api from '../../services/api';
-import classService from '../../services/classService';
+
 import {
     Users, ArrowLeft, Plus, Search, Edit2, Trash2, X,
     Shield, GraduationCap, BookOpen, CheckCircle, XCircle, Loader2
@@ -35,7 +35,7 @@ function UsersPage() {
         role: 'student',
         department: 'Khoa Du lịch',
         studentId: '',
-        classes: [],
+        studentId: '',
     });
 
     useEffect(() => {
@@ -44,18 +44,11 @@ function UsersPage() {
 
     const fetchData = async () => {
         setLoading(true);
-        await Promise.all([fetchUsers(), fetchClasses()]);
+        await Promise.all([fetchUsers()]);
         setLoading(false);
     };
 
-    const fetchClasses = async () => {
-        try {
-            const data = await classService.getAll();
-            setClasses(data.classes);
-        } catch (error) {
-            console.error('Error fetching classes:', error);
-        }
-    };
+
 
     const fetchUsers = async () => {
         try {
@@ -84,7 +77,7 @@ function UsersPage() {
                 role: user.role || 'student',
                 department: user.department || 'Khoa Du lịch',
                 studentId: user.studentId || '',
-                classes: user.classes ? user.classes.map(c => c._id) : [],
+                studentId: user.studentId || '',
             });
         } else {
             setEditingUser(null);
@@ -96,7 +89,7 @@ function UsersPage() {
                 role: 'student',
                 department: 'Khoa Du lịch',
                 studentId: '',
-                classes: [],
+                studentId: '',
             });
         }
         setModalOpen(true);
@@ -124,7 +117,7 @@ function UsersPage() {
                     department: formData.department,
 
                     studentId: formData.studentId,
-                    classes: formData.classes,
+                    studentId: formData.studentId,
                 };
                 await api.put(`/auth/users/${editingUser._id}`, updateData);
             } else {
@@ -195,9 +188,9 @@ function UsersPage() {
         const matchesStatus = filterStatus === 'all' ||
             (filterStatus === 'active' && user.isActive) ||
             (filterStatus === 'inactive' && !user.isActive);
-        const matchesClass = filterClass === 'all' || (user.classes && user.classes.some(c => c._id === filterClass));
 
-        return matchesSearch && matchesRole && matchesStatus && matchesClass;
+
+        return matchesSearch && matchesRole && matchesStatus;
     });
 
     if (!canView) {
@@ -276,16 +269,7 @@ function UsersPage() {
                             <option value="inactive">Vô hiệu hóa</option>
                         </select>
 
-                        <select
-                            value={filterClass}
-                            onChange={(e) => setFilterClass(e.target.value)}
-                            className="px-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:border-rose-400 focus:ring-4 focus:ring-rose-500/10 transition-all outline-none md:w-40"
-                        >
-                            <option value="all">Tất cả lớp học</option>
-                            {classes.map(cls => (
-                                <option key={cls._id} value={cls._id}>{cls.name} ({cls.code})</option>
-                            ))}
-                        </select>
+
 
                         {canCreate && (
                             <button
@@ -319,7 +303,7 @@ function UsersPage() {
                                     <tr className="bg-slate-50 border-b border-slate-200">
                                         <th className="p-5 text-left text-xs font-extrabold text-slate-500 uppercase tracking-wider">Thông tin người dùng</th>
                                         <th className="p-5 text-left text-xs font-extrabold text-slate-500 uppercase tracking-wider">Vai trò</th>
-                                        <th className="p-5 text-left text-xs font-extrabold text-slate-500 uppercase tracking-wider">Lớp học</th>
+
                                         <th className="p-5 text-left text-xs font-extrabold text-slate-500 uppercase tracking-wider">Trạng thái</th>
                                         <th className="p-5 text-right text-xs font-extrabold text-slate-500 uppercase tracking-wider">Hành động</th>
                                     </tr>
@@ -349,19 +333,7 @@ function UsersPage() {
                                                     )}
                                                 </div>
                                             </td>
-                                            <td className="p-5">
-                                                <div className="flex flex-wrap gap-1 max-w-[200px]">
-                                                    {user.classes && user.classes.length > 0 ? (
-                                                        user.classes.map((cls, idx) => (
-                                                            <span key={idx} className="bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded text-[10px] border border-slate-200 truncate max-w-full">
-                                                                {cls.code || cls.name}
-                                                            </span>
-                                                        ))
-                                                    ) : (
-                                                        <span className="text-slate-400 text-xs italic">Chưa có lớp</span>
-                                                    )}
-                                                </div>
-                                            </td>
+
                                             <td className="p-5">
                                                 {user.isActive ? (
                                                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-100">
@@ -546,37 +518,7 @@ function UsersPage() {
                                     </div>
                                 )}
 
-                                {formData.role === 'student' && (
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                                            Lớp học phần
-                                        </label>
-                                        <div className="max-h-40 overflow-y-auto border border-slate-200 rounded-xl p-3 bg-slate-50 space-y-2">
-                                            {classes.map(cls => (
-                                                <label key={cls._id} className="flex items-center gap-2 cursor-pointer hover:bg-slate-100 p-1 rounded">
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={formData.classes.includes(cls._id)}
-                                                        onChange={(e) => {
-                                                            if (e.target.checked) {
-                                                                setFormData({ ...formData, classes: [...formData.classes, cls._id] });
-                                                            } else {
-                                                                setFormData({ ...formData, classes: formData.classes.filter(id => id !== cls._id) });
-                                                            }
-                                                        }}
-                                                        className="rounded border-slate-300 text-rose-500 focus:ring-rose-500"
-                                                    />
-                                                    <span className="text-sm text-slate-700">
-                                                        {cls.name} <span className="text-slate-400 text-xs">({cls.code})</span>
-                                                    </span>
-                                                </label>
-                                            ))}
-                                            {classes.length === 0 && (
-                                                <p className="text-sm text-slate-400 italic text-center py-2">Chưa có lớp học nào</p>
-                                            )}
-                                        </div>
-                                    </div>
-                                )}
+
                             </div>
                             <div className="flex gap-3 p-5 border-t border-slate-100">
                                 <button

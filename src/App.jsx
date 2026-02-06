@@ -5,15 +5,12 @@ import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
 import DashboardPage from './pages/dashboard/DashboardPage';
 import MapPage from './pages/MapPage';
-import AssignmentsPage from './pages/assignments/AssignmentsPage';
 import UsersPage from './pages/admin/UsersPage';
 import PointsPage from './pages/admin/PointsPage';
 import RoutesPage from './pages/admin/RoutesPage';
 import ProvidersPage from './pages/admin/ProvidersPage';
 import PermissionsPage from './pages/admin/PermissionsPage';
 import ChangePasswordPage from './pages/admin/ChangePasswordPage';
-import CoursesPage from './pages/admin/CoursesPage';
-import ClassesPage from './pages/admin/ClassesPage';
 import RequestApprovalPage from './pages/admin/RequestApprovalPage';
 import RequestApprovalDetailPage from './pages/admin/RequestApprovalDetailPage';
 
@@ -42,18 +39,6 @@ function App() {
             </ProtectedRoute>
           } />
 
-          {/* Assignment Routes */}
-          <Route path="/assignments" element={
-            <ProtectedRoute>
-              <AssignmentsPage />
-            </ProtectedRoute>
-          } />
-          <Route path="/assignments/create" element={
-            <LecturerRoute>
-              <AssignmentsPage />
-            </LecturerRoute>
-          } />
-
           {/* Admin Routes */}
           <Route path="/admin/users" element={
             <ProtectedRoute>
@@ -67,17 +52,7 @@ function App() {
             </AdminRoute>
           } />
 
-          <Route path="/admin/courses" element={
-            <AdminRoute>
-              <CoursesPage />
-            </AdminRoute>
-          } />
 
-          <Route path="/admin/classes" element={
-            <AdminRoute>
-              <ClassesPage />
-            </AdminRoute>
-          } />
 
           <Route path="/admin/change-password" element={
             <ProtectedRoute>

@@ -392,57 +392,7 @@ function DashboardPage() {
                         </Link>
                     )}
 
-                    {/* Management Courses - Admin Only */}
-                    {isAdmin && (
-                        <Link
-                            to="/admin/courses"
-                            className="group bg-white rounded-2xl p-6 border border-slate-200 hover:border-indigo-400 shadow-sm hover:shadow-xl hover:shadow-indigo-500/10 transition-all duration-300 relative overflow-hidden"
-                        >
-                            <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity transform group-hover:scale-110 duration-500">
-                                <BookOpen className="w-32 h-32 text-indigo-600" />
-                            </div>
-                            <div className="relative z-10 flex flex-col h-full">
-                                <div className="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 shadow-sm">
-                                    <BookOpen className="w-7 h-7" />
-                                </div>
-                                <h4 className="text-lg font-bold text-slate-800 mb-2 group-hover:text-indigo-600 transition-colors">
-                                    Quản lý Học phần
-                                </h4>
-                                <p className="text-slate-500 text-sm leading-relaxed mb-4 flex-grow">
-                                    Quản lý danh sách các môn học và học phần trong chương trình.
-                                </p>
-                                <div className="flex items-center text-indigo-600 text-sm font-semibold group-hover:translate-x-1 transition-transform">
-                                    Quản lý ngay &rarr;
-                                </div>
-                            </div>
-                        </Link>
-                    )}
 
-                    {/* Management Classes - Admin Only */}
-                    {isAdmin && (
-                        <Link
-                            to="/admin/classes"
-                            className="group bg-white rounded-2xl p-6 border border-slate-200 hover:border-blue-400 shadow-sm hover:shadow-xl hover:shadow-blue-500/10 transition-all duration-300 relative overflow-hidden"
-                        >
-                            <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity transform group-hover:scale-110 duration-500">
-                                <Layers className="w-32 h-32 text-blue-600" />
-                            </div>
-                            <div className="relative z-10 flex flex-col h-full">
-                                <div className="w-14 h-14 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 shadow-sm">
-                                    <Layers className="w-7 h-7" />
-                                </div>
-                                <h4 className="text-lg font-bold text-slate-800 mb-2 group-hover:text-blue-600 transition-colors">
-                                    Quản lý Lớp học
-                                </h4>
-                                <p className="text-slate-500 text-sm leading-relaxed mb-4 flex-grow">
-                                    Tổ chức các lớp học phần, gán giảng viên và quản lý sinh viên.
-                                </p>
-                                <div className="flex items-center text-blue-600 text-sm font-semibold group-hover:translate-x-1 transition-transform">
-                                    Quản lý ngay &rarr;
-                                </div>
-                            </div>
-                        </Link>
-                    )}
                     {/* Approval Management - Visible to all (different views inside) */}
                     <Link
                         to="/admin/approvals"
