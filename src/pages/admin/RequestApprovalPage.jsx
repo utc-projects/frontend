@@ -172,6 +172,14 @@ const RequestApprovalPage = () => {
                                             <span>Bởi <span className="font-medium text-slate-700">{req.requester?.name || 'Unknown'}</span></span>
                                             <span>•</span>
                                             <span>{new Date(req.createdAt).toLocaleString()}</span>
+                                            {req.status !== 'pending' && req.reviewer && (
+                                                <>
+                                                    <span>•</span>
+                                                    <span className={req.status === 'approved' ? 'text-green-600' : 'text-red-600'}>
+                                                        {req.status === 'approved' ? 'Đã duyệt bởi' : 'Đã từ chối bởi'} <span className="font-medium">{req.reviewer?.name}</span>
+                                                    </span>
+                                                </>
+                                            )}
                                         </div>
                                         {req.reviewNote && (
                                             <p className="text-xs text-slate-500 mt-1 italic">Note: {req.reviewNote}</p>

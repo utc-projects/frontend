@@ -416,6 +416,15 @@ const RequestApprovalDetailPage = () => {
                                     <FileText className="w-4 h-4 text-slate-400" />
                                     <span>Loại yêu cầu: <span className="capitalize font-medium">{action} {type}</span></span>
                                 </div>
+                                {request.status !== 'pending' && request.reviewer && (
+                                    <div className="flex items-center gap-3 text-sm text-slate-600">
+                                        <User className={`w-4 h-4 ${request.status === 'approved' ? 'text-green-500' : 'text-red-500'}`} />
+                                        <span>
+                                            {request.status === 'approved' ? 'Duyệt bởi: ' : 'Từ chối bởi: '}
+                                            <span className="font-semibold text-slate-900">{request.reviewer?.name || 'Unknown'}</span>
+                                        </span>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Action Form for Reviewers */}
