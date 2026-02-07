@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
 import {
     CheckCircle,
     XCircle,
@@ -18,6 +21,18 @@ import {
     AlertCircle
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+
+// Fix Leaflet's default icon path issues
+import icon from 'leaflet/dist/images/marker-icon.png';
+import iconShadow from 'leaflet/dist/images/marker-shadow.png';
+
+let DefaultIcon = L.icon({
+    iconUrl: icon,
+    shadowUrl: iconShadow,
+    iconAnchor: [12, 41]
+});
+
+L.Marker.prototype.options.icon = DefaultIcon;
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 
@@ -95,31 +110,30 @@ const RequestApprovalDetailPage = () => {
         }
     };
 
-    const handleApprove = async () => {
-        if (!window.confirm('Bạn có chắc chắn muốn phê duyệt yêu cầu này?')) return;
-        try {
-            const token = localStorage.getItem('token');
-            await axios.put(`${API_URL}/api/change-requests/${id}/approve`, { note: reviewNote }, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            alert('Đã phê duyệt thành công!');
-            navigate('/admin/approvals');
-        } catch (error) {
-            alert('Lỗi phê duyệt: ' + (error.response?.data?.message || error.message));
-        }
-    };
+    const handleAction = async (status) => {
+        const actionText = status === 'approve' ? 'phê duyệt' : 'từ chối';
 
-    const handleReject = async () => {
-        if (!window.confirm('Bạn có chắc chắn muốn từ chối yêu cầu này?')) return;
+        // Validation: Review note is required
+        if (!reviewNote || reviewNote.trim() === '') {
+            alert(`Vui lòng nhập ghi chú xử lý trước khi ${actionText} yêu cầu!`);
+            return;
+        }
+
+        if (!window.confirm(`Bạn có chắc chắn muốn ${actionText} yêu cầu này?`)) return;
+
         try {
             const token = localStorage.getItem('token');
-            await axios.put(`${API_URL}/api/change-requests/${id}/reject`, { note: reviewNote }, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            alert('Đã từ chối yêu cầu!');
+            const endpoint = status === 'approve' ? 'approve' : 'reject';
+
+            await axios.put(`${API_URL}/api/change-requests/${id}/${endpoint}`,
+                { note: reviewNote },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+
+            alert(`Đã ${actionText} thành công!`);
             navigate('/admin/approvals');
         } catch (error) {
-            alert('Lỗi từ chối: ' + (error.response?.data?.message || error.message));
+            alert(`Lỗi ${actionText}: ` + (error.response?.data?.message || error.message));
         }
     };
 
@@ -169,6 +183,53 @@ const RequestApprovalDetailPage = () => {
         </div>
     );
 
+
+    // --- Map Renderer ---
+    const renderMap = (location) => {
+        if (!location) return null;
+
+        let coords;
+        try {
+            const loc = typeof location === 'string' ? JSON.parse(location) : location;
+            // Handle GeoJSON format { type: 'Point', coordinates: [lng, lat] }
+            if (loc.coordinates && Array.isArray(loc.coordinates)) {
+                // Leaflet uses [lat, lng], GeoJSON uses [lng, lat]
+                coords = [loc.coordinates[1], loc.coordinates[0]];
+            }
+        } catch (e) {
+            console.error('Error parsing location:', e);
+            return null;
+        }
+
+        if (!coords || isNaN(coords[0]) || isNaN(coords[1])) return null;
+
+        return (
+            <div className="space-y-2">
+                <label className="text-sm font-bold text-slate-800 mb-2 block flex items-center justify-between">
+                    <span>Vị trí trên bản đồ</span>
+                    <span className="text-xs font-normal text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
+                        {coords[0].toFixed(6)}, {coords[1].toFixed(6)}
+                    </span>
+                </label>
+                <div className="h-64 rounded-xl overflow-hidden border-2 border-slate-200 relative z-0">
+                    <MapContainer
+                        center={coords}
+                        zoom={15}
+                        style={{ height: '100%', width: '100%' }}
+                        scrollWheelZoom={false} // Disable scroll zoom for better page scroll UX
+                        dragging={false} // Maybe allow dragging? usually read-only maps might allow dragging but not changing marker. Let's allow dragging to explore surroundings.
+                    >
+                        <TileLayer
+                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                            attribution='&copy; OpenStreetMap contributors'
+                        />
+                        <Marker position={coords}></Marker>
+                    </MapContainer>
+                </div>
+            </div>
+        );
+    };
+
     // --- Content Renderers ---
     const renderPointContent = (d) => (
         <div className="space-y-6">
@@ -188,6 +249,8 @@ const RequestApprovalDetailPage = () => {
                     </div>
                 </div>
             </div>
+
+            {d.location && renderMap(d.location)}
 
             <div>
                 <label className="text-sm font-bold text-slate-800 mb-2 block">Mô tả</label>
@@ -236,6 +299,8 @@ const RequestApprovalDetailPage = () => {
                         <p className="text-slate-800 font-medium mt-1">{d.serviceArea}</p>
                     </div>
                 </div>
+
+                {d.location && renderMap(d.location)}
 
                 <div className="p-6 bg-slate-50 rounded-2xl border border-slate-200">
                     <label className="text-xs text-slate-500 uppercase font-bold tracking-wider mb-3 block">Thông tin liên hệ</label>
@@ -358,13 +423,13 @@ const RequestApprovalDetailPage = () => {
                                     <h3 className="text-lg font-bold text-slate-800 mb-4">Phê duyệt yêu cầu</h3>
                                     <div className="flex gap-4">
                                         <button
-                                            onClick={handleReject}
+                                            onClick={() => handleAction('reject')}
                                             className="flex-1 py-3 bg-white border border-rose-200 text-rose-600 rounded-xl font-bold hover:bg-rose-50 transition-all shadow-sm flex items-center justify-center gap-2"
                                         >
                                             <XCircle className="w-5 h-5" /> Từ chối
                                         </button>
                                         <button
-                                            onClick={handleApprove}
+                                            onClick={() => handleAction('approve')}
                                             className="flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-500/30 transition-all flex items-center justify-center gap-2"
                                         >
                                             <CheckCircle className="w-5 h-5" /> Phê duyệt
@@ -373,9 +438,10 @@ const RequestApprovalDetailPage = () => {
                                     <textarea
                                         className="w-full mt-4 border border-slate-300 rounded-xl p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none shadow-sm bg-white"
                                         rows="2"
-                                        placeholder="Ghi chú (tùy chọn)..."
+                                        placeholder="Ghi chú xử lý (bắt buộc)..."
                                         value={reviewNote}
                                         onChange={e => setReviewNote(e.target.value)}
+                                        required
                                     ></textarea>
                                 </div>
                             )}
@@ -437,20 +503,21 @@ const RequestApprovalDetailPage = () => {
                                     <textarea
                                         className="w-full border border-slate-300 rounded-xl p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none shadow-sm bg-white mb-4"
                                         rows="4"
-                                        placeholder="Nhập ghi chú hoặc lý do..."
+                                        placeholder="Nhập ghi chú xử lý (bắt buộc)..."
                                         value={reviewNote}
                                         onChange={e => setReviewNote(e.target.value)}
+                                        required
                                     ></textarea>
 
                                     <div className="grid grid-cols-2 gap-3">
                                         <button
-                                            onClick={handleReject}
+                                            onClick={() => handleAction('reject')}
                                             className="px-4 py-3 bg-white border border-rose-200 text-rose-600 rounded-xl font-bold hover:bg-rose-50 transition-all shadow-sm flex items-center justify-center gap-2"
                                         >
                                             <XCircle className="w-4 h-4" /> Từ chối
                                         </button>
                                         <button
-                                            onClick={handleApprove}
+                                            onClick={() => handleAction('approve')}
                                             className="px-4 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-500/30 transition-all flex items-center justify-center gap-2"
                                         >
                                             <CheckCircle className="w-4 h-4" /> Phê duyệt
