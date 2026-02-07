@@ -1,82 +1,126 @@
-# GTVT Hoc Tap - Frontend
+# Graduation Project Frontend (Admin & User Portal)
 
-This is the frontend application for the GTVT Hoc Tap project, built with [React](https://react.dev/), [Vite](https://vitejs.dev/), and [Tailwind CSS](https://tailwindcss.com/). It provides an interactive map interface and an administration dashboard for managing tourism data.
+This is the frontend client for the Graduation Project (Đồ Án), a web application for managing tourism data, creating travel routes, and administrative approvals.
 
-## Features
+## Overview
 
-- **Interactive Map**: View tourism points, providers, and routes using [Leaflet](https://leafletjs.com/).
-- **Admin Dashboard**: Manage users, classes, courses, and approve requests.
-- **Request Approval System**: Workflow for students/contributors to submit changes for approval.
-- **Role-based Access Control**: Different views for students, lecturers, and admins.
-- **Responsive Design**: Optimized for both desktop and mobile devices.
+The frontend provides a modern, responsive interface for:
+- **Browsing Tourism Points:** Interactive maps and detailed information.
+- **Route Planning:** Create and customize travel routes with drag-and-drop support.
+- **Service Providers:** View and manage local service listings.
+- **User Dashboard:** Track requests and account settings.
+- **Admin Portal:** Manage content, approve user requests, and oversee the system.
+
+Built with **React 19**, **Vite**, and **Tailwind CSS**.
 
 ## Tech Stack
 
-- **Framework**: React 19
-- **Build Tool**: Vite
-- **Styling**: Tailwind CSS
-- **Maps**: React Leaflet
-- **Icons**: Lucide React
-- **HTTP Client**: Axios
-- **Routing**: React Router DOM
+- **Framework:** React 19 (via Vite)
+- **Styling:** Tailwind CSS + PostCSS
+- **Routing:** React Router DOM (v7)
+- **Maps:** Leaflet & React Leaflet (OpenStreetMap integration)
+- **State/Auth:** Context API (AuthContext)
+- **HTTP Client:** Axios
+- **Drag & Drop:** @dnd-kit (for route ordering)
+- **Icons:** Lucide React
+- **Dates:** Day.js
+
+## Prerequisites
+
+- [Node.js](https://nodejs.org/) (v18+ recommended)
+- The [Backend API](../backend) running locally or remotely.
 
 ## Getting Started
 
-### Prerequisites
+### 1. Clone the Repository
 
-- Node.js (v18 or higher recommended)
-- npm or yarn
+```bash
+git clone <repository-url>
+cd frontend
+```
 
-### Installation
+### 2. Install Dependencies
 
-1. Clone the repository:
-   ```bash
-   git clone <repository-url>
-   cd frontend
-   ```
+You can use `npm`, `yarn`, or `pnpm`. We recommend `npm` for consistency with the backend.
 
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
+```bash
+npm install
+```
 
-3. Configure environment variables:
-   - Create a `.env` file in the root directory.
-   - Add the following variable:
-     ```env
-     VITE_API_URL=http://localhost:5001
-     ```
+### 3. Environment Configuration
 
-4. Start the development server:
-   ```bash
-   npm run dev
-   ```
+Create a `.env` file in the frontend root:
 
-5. Open [http://localhost:5173](http://localhost:5173) in your browser.
+```bash
+touch .env
+```
 
-## Scripts
+Add the following configuration (adjust if your backend runs elsewhere):
 
-- `npm run dev`: Start development server.
-- `npm run build`: Build for production.
-- `npm run preview`: Preview the production build locally.
-- `npm run lint`: Run ESLint.
+```env
+VITE_API_URL=http://localhost:5001
+```
+
+### 4. Start Development Server
+
+```bash
+npm run dev
+```
+
+The application will be available at `http://localhost:5173`.
 
 ## Project Structure
 
-- `src/components`: Reusable UI components (Map layer, Sidebar, etc.).
-- `src/pages`: Page components (Admin pages, Dashboard, MapPage).
-- `src/contexts`: Context providers (AuthContext).
-- `src/services`: API service modules.
-- `src/assets`: Static assets.
+```
+├── src/
+│   ├── assets/       # Static images and icons
+│   ├── components/   # Reusable UI components (Navbar, Cards, Maps)
+│   ├── contexts/     # Global state (Auth, Theme)
+│   ├── layouts/      # Page layouts (MainLayout, AdminLayout)
+│   ├── pages/        # Route components (Home, Dashboard, Login)
+│   ├── services/     # API service functions (Axios wrappers)
+│   ├── App.jsx       # Main App component & Routes
+│   └── main.jsx      # Entry point
+├── public/           # Static public assets
+├── .env              # Environment variables
+├── vite.config.js    # Vite configuration
+└── package.json      # Dependencies and scripts
+```
 
-## Contributing
+## Key Features
 
-1. Fork the repository.
-2. Create your feature branch (`git checkout -b feature/amazing-feature`).
-3. Commit your changes (`git commit -m 'Add some amazing feature'`).
-4. Push to the branch (`git push origin feature/amazing-feature`).
-5. Open a Pull Request.
+- **Interactive Maps:** View tourism points and routes on an interactive map using Leaflet.
+- **Role-Based Access:**
+    - **Guest:** View public points and routes.
+    - **User:** detailed views, submit edit requests.
+    - **Lecturer/Approver:** Review and approve/reject requests.
+    - **Admin:** Full system control.
+- **Drag & Drop Routes:** Easily reorder stops in a travel route.
+- **Responsive Design:** Optimized for desktop and mobile.
 
-## License
+## Available Scripts
 
-[MIT](LICENSE)
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start the development server with HMR. |
+| `npm run build` | Build the app for production to the `dist` folder. |
+| `npm run lint` | Run ESLint to check for code quality issues. |
+| `npm run preview` | Locally preview the production build. |
+
+## Deployment
+
+To deploy the frontend to a static host (Vercel, Netlify, etc.):
+
+1. **Build the project:**
+   ```bash
+   npm run build
+   ```
+
+2. **Deploy the `dist` folder.**
+
+**Note for SPA Routing:** Ensure your host is configured to rewrite all 404s to `index.html` so that React Router handles the paths.
+
+## Troubleshooting
+
+- **Map not loading:** Ensure you have internet access (Leaflet tiles are fetched from OpenStreetMap).
+- **API Errors:** Check that the `VITE_API_URL` is correct and the backend server is running. CORS errors usually mean the backend isn't configured to accept requests from your frontend port.
