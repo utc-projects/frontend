@@ -19,7 +19,7 @@ import { useAuth } from '../../contexts/AuthContext';
 
 const RequestApprovalPage = () => {
     const [requests, setRequests] = useState([]);
-    const { user, isStudent } = useAuth();
+    const { user, isStudent, isAdmin, isLecturer } = useAuth();
     const [activeTab, setActiveTab] = useState('all');
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
@@ -32,6 +32,7 @@ const RequestApprovalPage = () => {
             if (activeTab === 'my-requests') setActiveTab('all');
         }
     }, [isStudent]);
+
 
     useEffect(() => {
         if (user) {
@@ -132,13 +133,15 @@ const RequestApprovalPage = () => {
                         </button>
                     </>
                 )}
-                <button
-                    onClick={() => setActiveTab('my-requests')}
-                    className={`px-6 py-3 font-medium text-sm transition-colors relative ${activeTab === 'my-requests' ? 'text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
-                >
-                    Yêu cầu của tôi
-                    {activeTab === 'my-requests' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600 rounded-t-full"></span>}
-                </button>
+                {(!isAdmin && !isLecturer) && (
+                    <button
+                        onClick={() => setActiveTab('my-requests')}
+                        className={`px-6 py-3 font-medium text-sm transition-colors relative ${activeTab === 'my-requests' ? 'text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+                    >
+                        Yêu cầu của tôi
+                        {activeTab === 'my-requests' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600 rounded-t-full"></span>}
+                    </button>
+                )}
             </div>
 
             {/* List */}
