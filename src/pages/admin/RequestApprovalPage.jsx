@@ -29,6 +29,9 @@ const RequestApprovalPage = () => {
     const [totalPages, setTotalPages] = useState(1);
     const [totalItems, setTotalItems] = useState(0);
 
+    // Filter State
+    const [filterType, setFilterType] = useState('all');
+
     const navigate = useNavigate();
 
     // Set default tab for students
@@ -40,28 +43,36 @@ const RequestApprovalPage = () => {
         }
     }, [isStudent]);
 
-    // Reset to page 1 when tab changes
+    // Reset to page 1 when tab or filter changes
     useEffect(() => {
         setPage(1);
-    }, [activeTab]);
+    }, [activeTab, filterType]);
 
     useEffect(() => {
         if (user) {
             fetchRequests();
         }
-    }, [activeTab, user, page, limit]);
+    }, [activeTab, user, page, limit, filterType]);
 
     const fetchRequests = async () => {
         try {
             setLoading(true);
             const token = localStorage.getItem('token');
+            // Basic params
+            const params = {
+                page,
+                limit,
+                status: activeTab === 'all' || activeTab === 'my-requests' ? undefined : activeTab,
+            };
+
+            // Add type filter if selected
+            if (filterType !== 'all') {
+                params.type = filterType;
+            }
+
             const config = {
                 headers: { Authorization: `Bearer ${token}` },
-                params: {
-                    page,
-                    limit,
-                    status: activeTab === 'all' || activeTab === 'my-requests' ? undefined : activeTab
-                }
+                params
             };
 
             const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5001';
@@ -118,6 +129,19 @@ const RequestApprovalPage = () => {
                 <div>
                     <h1 className="text-2xl font-bold text-slate-900">Quản lý Yêu cầu Phê duyệt</h1>
                     <p className="text-slate-500">Xem và xử lý các thay đổi dữ liệu từ sinh viên</p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                    <select
+                        value={filterType}
+                        onChange={(e) => setFilterType(e.target.value)}
+                        className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 shadow-sm cursor-pointer"
+                    >
+                        <option value="all">Tất cả loại</option>
+                        <option value="point">Điểm du lịch</option>
+                        <option value="route">Tuyến du lịch</option>
+                        <option value="provider">Nhà cung cấp</option>
+                    </select>
                 </div>
             </div>
 
@@ -272,8 +296,8 @@ const RequestApprovalPage = () => {
                                                         key={p}
                                                         onClick={() => setPage(p)}
                                                         className={`min-w-[32px] h-8 flex items-center justify-center rounded-lg text-sm font-medium transition-colors ${page === p
-                                                                ? 'bg-blue-500 text-white shadow-blue-500/30 shadow-sm'
-                                                                : 'text-slate-600 hover:bg-slate-50 border border-transparent hover:border-slate-200'
+                                                            ? 'bg-blue-500 text-white shadow-blue-500/30 shadow-sm'
+                                                            : 'text-slate-600 hover:bg-slate-50 border border-transparent hover:border-slate-200'
                                                             }`}
                                                     >
                                                         {p}
