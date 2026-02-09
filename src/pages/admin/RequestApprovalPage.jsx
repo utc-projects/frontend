@@ -164,11 +164,18 @@ const RequestApprovalPage = () => {
                             {activeTab === 'pending' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600 rounded-t-full"></span>}
                         </button>
                         <button
-                            onClick={() => setActiveTab('history')}
-                            className={`px-6 py-3 font-medium text-sm transition-colors relative ${activeTab === 'history' ? 'text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+                            onClick={() => setActiveTab('approved')}
+                            className={`px-6 py-3 font-medium text-sm transition-colors relative ${activeTab === 'approved' ? 'text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
                         >
-                            Lịch sử duyệt
-                            {activeTab === 'history' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600 rounded-t-full"></span>}
+                            Đã duyệt
+                            {activeTab === 'approved' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600 rounded-t-full"></span>}
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('rejected')}
+                            className={`px-6 py-3 font-medium text-sm transition-colors relative ${activeTab === 'rejected' ? 'text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+                        >
+                            Đã từ chối
+                            {activeTab === 'rejected' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600 rounded-t-full"></span>}
                         </button>
                     </>
                 )}
