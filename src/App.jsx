@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider } from './contexts/AuthContext';
 import { SocketProvider } from './contexts/SocketContext';
 import NotificationManager from './components/NotificationManager';
+import MainLayout from './components/MainLayout';
 import { ProtectedRoute, AdminRoute, LecturerRoute, StudentRoute, PermissionRoute } from './components/ProtectedRoute';
 import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
@@ -34,7 +35,9 @@ function App() {
             {/* Protected routes - require authentication */}
             <Route path="/dashboard" element={
               <ProtectedRoute>
-                <DashboardPage />
+                <MainLayout>
+                  <DashboardPage />
+                </MainLayout>
               </ProtectedRoute>
             } />
             <Route path="/map" element={
@@ -46,13 +49,17 @@ function App() {
             {/* Admin Routes */}
             <Route path="/admin/users" element={
               <ProtectedRoute>
-                <UsersPage />
+                <MainLayout>
+                  <UsersPage />
+                </MainLayout>
               </ProtectedRoute>
             } />
 
             <Route path="/admin/permissions" element={
               <AdminRoute>
-                <PermissionsPage />
+                <MainLayout>
+                  <PermissionsPage />
+                </MainLayout>
               </AdminRoute>
             } />
 
@@ -60,35 +67,47 @@ function App() {
 
             <Route path="/admin/change-password" element={
               <ProtectedRoute>
-                <ChangePasswordPage />
+                <MainLayout>
+                  <ChangePasswordPage />
+                </MainLayout>
               </ProtectedRoute>
             } />
 
             <Route path="/admin/approvals" element={
               <ProtectedRoute>
-                <RequestApprovalPage />
+                <MainLayout>
+                  <RequestApprovalPage />
+                </MainLayout>
               </ProtectedRoute>
             } />
             <Route path="/admin/approvals/:id" element={
               <ProtectedRoute>
-                <RequestApprovalDetailPage />
+                <MainLayout>
+                  <RequestApprovalDetailPage />
+                </MainLayout>
               </ProtectedRoute>
             } />
 
             {/* Management Routes - Viewable by all authenticated users if they have permission */}
             <Route path="/admin/points" element={
               <PermissionRoute resource="points" action="view">
-                <PointsPage />
+                <MainLayout>
+                  <PointsPage />
+                </MainLayout>
               </PermissionRoute>
             } />
             <Route path="/admin/routes" element={
               <PermissionRoute resource="routes" action="view">
-                <RoutesPage />
+                <MainLayout>
+                  <RoutesPage />
+                </MainLayout>
               </PermissionRoute>
             } />
             <Route path="/admin/providers" element={
               <PermissionRoute resource="providers" action="view">
-                <ProvidersPage />
+                <MainLayout>
+                  <ProvidersPage />
+                </MainLayout>
               </PermissionRoute>
             } />
 
@@ -97,36 +116,27 @@ function App() {
             {/* Estimate Routes */}
             <Route path="/estimates" element={
               <ProtectedRoute>
-                <EstimateList />
+                <MainLayout>
+                  <EstimateList />
+                </MainLayout>
               </ProtectedRoute>
             } />
             <Route path="/estimates/new" element={
               <ProtectedRoute>
-                <EstimateForm />
+                <MainLayout>
+                  <EstimateForm />
+                </MainLayout>
               </ProtectedRoute>
             } />
             <Route path="/estimates/:id/edit" element={
               <ProtectedRoute>
-                <EstimateForm />
+                <MainLayout>
+                  <EstimateForm />
+                </MainLayout>
               </ProtectedRoute>
             } />
 
-            {/* Estimate Routes */}
-            <Route path="/estimates" element={
-              <ProtectedRoute>
-                <EstimateList />
-              </ProtectedRoute>
-            } />
-            <Route path="/estimates/new" element={
-              <ProtectedRoute>
-                <EstimateForm />
-              </ProtectedRoute>
-            } />
-            <Route path="/estimates/:id/edit" element={
-              <ProtectedRoute>
-                <EstimateForm />
-              </ProtectedRoute>
-            } />
+
 
             {/* Default redirect to login */}
             <Route path="/" element={<Navigate to="/login" replace />} />
