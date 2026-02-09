@@ -41,6 +41,10 @@ const RequestApprovalDetailPage = () => {
     const navigate = useNavigate();
     const { user, isAdmin, isLecturer } = useAuth();
 
+    // DEBUG: Check if component mounts
+    // alert('DEBUG: RequestApprovalDetailPage Mounted');
+    console.log('DEBUG: RequestApprovalDetailPage Mounted, User:', user);
+
     // State
     const [request, setRequest] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -96,15 +100,21 @@ const RequestApprovalDetailPage = () => {
                 : `${API_URL}/api/change-requests`;
 
             const { data } = await axios.get(url, config);
-            const found = data.find(r => r._id === id);
-            setRequest(found);
+
+            // Ensure ID comparison is safe (string vs string)
+            const found = data.find(r => String(r._id) === String(id));
+
+            if (!found) {
+                console.warn('Request not found in list');
+            }
+
+            setRequest(found || null);
 
             if (found && found.reviewNote) setReviewNote(found.reviewNote);
 
         } catch (error) {
             console.error('Error fetching request:', error);
-            alert('Không thể tải thông tin yêu cầu.');
-            navigate('/admin/approvals');
+            // setRequest(null);
         } finally {
             setLoading(false);
         }

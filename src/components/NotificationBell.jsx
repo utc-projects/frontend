@@ -140,6 +140,8 @@ const NotificationBell = () => {
                                                     {notification.link && (
                                                         <Link
                                                             to={notification.link}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
                                                             onClick={() => {
                                                                 if (!notification.isRead) markAsRead(notification._id);
                                                                 setIsOpen(false);
