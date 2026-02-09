@@ -1,5 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
+import { SocketProvider } from './context/SocketContext';
+import NotificationManager from './components/NotificationManager';
 import { ProtectedRoute, AdminRoute, LecturerRoute, StudentRoute, PermissionRoute } from './components/ProtectedRoute';
 import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
@@ -21,114 +23,117 @@ import './index.css';
 function App() {
   return (
     <AuthProvider>
-      <Router>
-        <Routes>
-          {/* Public routes - only login/register */}
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
+      <SocketProvider>
+        <NotificationManager />
+        <Router>
+          <Routes>
+            {/* Public routes - only login/register */}
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
 
-          {/* Protected routes - require authentication */}
-          <Route path="/dashboard" element={
-            <ProtectedRoute>
-              <DashboardPage />
-            </ProtectedRoute>
-          } />
-          <Route path="/map" element={
-            <ProtectedRoute>
-              <MapPage />
-            </ProtectedRoute>
-          } />
+            {/* Protected routes - require authentication */}
+            <Route path="/dashboard" element={
+              <ProtectedRoute>
+                <DashboardPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/map" element={
+              <ProtectedRoute>
+                <MapPage />
+              </ProtectedRoute>
+            } />
 
-          {/* Admin Routes */}
-          <Route path="/admin/users" element={
-            <ProtectedRoute>
-              <UsersPage />
-            </ProtectedRoute>
-          } />
+            {/* Admin Routes */}
+            <Route path="/admin/users" element={
+              <ProtectedRoute>
+                <UsersPage />
+              </ProtectedRoute>
+            } />
 
-          <Route path="/admin/permissions" element={
-            <AdminRoute>
-              <PermissionsPage />
-            </AdminRoute>
-          } />
-
-
-
-          <Route path="/admin/change-password" element={
-            <ProtectedRoute>
-              <ChangePasswordPage />
-            </ProtectedRoute>
-          } />
-
-          <Route path="/admin/approvals" element={
-            <ProtectedRoute>
-              <RequestApprovalPage />
-            </ProtectedRoute>
-          } />
-          <Route path="/admin/approvals/:id" element={
-            <ProtectedRoute>
-              <RequestApprovalDetailPage />
-            </ProtectedRoute>
-          } />
-
-          {/* Management Routes - Viewable by all authenticated users if they have permission */}
-          <Route path="/admin/points" element={
-            <PermissionRoute resource="points" action="view">
-              <PointsPage />
-            </PermissionRoute>
-          } />
-          <Route path="/admin/routes" element={
-            <PermissionRoute resource="routes" action="view">
-              <RoutesPage />
-            </PermissionRoute>
-          } />
-          <Route path="/admin/providers" element={
-            <PermissionRoute resource="providers" action="view">
-              <ProvidersPage />
-            </PermissionRoute>
-          } />
+            <Route path="/admin/permissions" element={
+              <AdminRoute>
+                <PermissionsPage />
+              </AdminRoute>
+            } />
 
 
 
-          {/* Estimate Routes */}
-          <Route path="/estimates" element={
-            <ProtectedRoute>
-              <EstimateList />
-            </ProtectedRoute>
-          } />
-          <Route path="/estimates/new" element={
-            <ProtectedRoute>
-              <EstimateForm />
-            </ProtectedRoute>
-          } />
-          <Route path="/estimates/:id/edit" element={
-            <ProtectedRoute>
-              <EstimateForm />
-            </ProtectedRoute>
-          } />
+            <Route path="/admin/change-password" element={
+              <ProtectedRoute>
+                <ChangePasswordPage />
+              </ProtectedRoute>
+            } />
 
-          {/* Estimate Routes */}
-          <Route path="/estimates" element={
-            <ProtectedRoute>
-              <EstimateList />
-            </ProtectedRoute>
-          } />
-          <Route path="/estimates/new" element={
-            <ProtectedRoute>
-              <EstimateForm />
-            </ProtectedRoute>
-          } />
-          <Route path="/estimates/:id/edit" element={
-            <ProtectedRoute>
-              <EstimateForm />
-            </ProtectedRoute>
-          } />
+            <Route path="/admin/approvals" element={
+              <ProtectedRoute>
+                <RequestApprovalPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/approvals/:id" element={
+              <ProtectedRoute>
+                <RequestApprovalDetailPage />
+              </ProtectedRoute>
+            } />
 
-          {/* Default redirect to login */}
-          <Route path="/" element={<Navigate to="/login" replace />} />
-          <Route path="*" element={<Navigate to="/login" replace />} />
-        </Routes>
-      </Router>
+            {/* Management Routes - Viewable by all authenticated users if they have permission */}
+            <Route path="/admin/points" element={
+              <PermissionRoute resource="points" action="view">
+                <PointsPage />
+              </PermissionRoute>
+            } />
+            <Route path="/admin/routes" element={
+              <PermissionRoute resource="routes" action="view">
+                <RoutesPage />
+              </PermissionRoute>
+            } />
+            <Route path="/admin/providers" element={
+              <PermissionRoute resource="providers" action="view">
+                <ProvidersPage />
+              </PermissionRoute>
+            } />
+
+
+
+            {/* Estimate Routes */}
+            <Route path="/estimates" element={
+              <ProtectedRoute>
+                <EstimateList />
+              </ProtectedRoute>
+            } />
+            <Route path="/estimates/new" element={
+              <ProtectedRoute>
+                <EstimateForm />
+              </ProtectedRoute>
+            } />
+            <Route path="/estimates/:id/edit" element={
+              <ProtectedRoute>
+                <EstimateForm />
+              </ProtectedRoute>
+            } />
+
+            {/* Estimate Routes */}
+            <Route path="/estimates" element={
+              <ProtectedRoute>
+                <EstimateList />
+              </ProtectedRoute>
+            } />
+            <Route path="/estimates/new" element={
+              <ProtectedRoute>
+                <EstimateForm />
+              </ProtectedRoute>
+            } />
+            <Route path="/estimates/:id/edit" element={
+              <ProtectedRoute>
+                <EstimateForm />
+              </ProtectedRoute>
+            } />
+
+            {/* Default redirect to login */}
+            <Route path="/" element={<Navigate to="/login" replace />} />
+            <Route path="*" element={<Navigate to="/login" replace />} />
+          </Routes>
+        </Router>
+      </SocketProvider>
     </AuthProvider>
   );
 }

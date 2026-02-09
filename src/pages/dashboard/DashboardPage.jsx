@@ -3,6 +3,7 @@ import { Navigate, Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { Map, MapPin, Waypoints, Building2, LogOut, User, Globe, Users, Shield, Settings, Key, X, Edit2, Loader2, ChevronDown, BookOpen, Layers, FileText } from 'lucide-react';
 import api from '../../services/api';
+import NotificationBell from '../../components/NotificationBell';
 
 function DashboardPage() {
     const { user, loading, isAdmin, isLecturer, logout, loadUser, checkPermission } = useAuth();
@@ -126,88 +127,94 @@ function DashboardPage() {
                     </div>
 
                     {/* User Dropdown */}
-                    <div className="relative" ref={dropdownRef}>
-                        <button
-                            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                            className="flex items-center gap-3 px-3 py-2 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl transition-all shadow-sm hover:shadow-md"
-                        >
-                            <div className="w-8 h-8 bg-emerald-100 text-emerald-600 rounded-lg flex items-center justify-center font-bold text-sm">
-                                {user.name?.charAt(0).toUpperCase()}
-                            </div>
-                            <div className="text-left hidden md:block">
-                                <p className="text-slate-800 font-bold text-sm leading-tight">{user.name}</p>
-                                <p className="text-xs text-slate-500 font-medium">{user.roleLabel}</p>
-                            </div>
-                            <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
-                        </button>
+                    <div className="flex items-center gap-4">
+                        <NotificationBell />
 
-                        {isDropdownOpen && (
-                            <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-slate-100 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2">
-                                <div className="p-3 border-b border-slate-100 bg-slate-50">
-                                    <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Tài khoản</p>
-                                    <p className="text-sm font-medium text-slate-800 truncate">{user.email}</p>
+                        <div className="relative" ref={dropdownRef}>
+                            <button
+                                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                                className="flex items-center gap-3 px-3 py-2 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl transition-all shadow-sm hover:shadow-md"
+                            >
+                                <div className="w-8 h-8 bg-emerald-100 text-emerald-600 rounded-lg flex items-center justify-center font-bold text-sm">
+                                    {user.name?.charAt(0).toUpperCase()}
                                 </div>
-                                <div className="p-1">
-                                    <button
-                                        onClick={() => {
-                                            setIsEditProfileOpen(true);
-                                            setIsDropdownOpen(false);
-                                        }}
-                                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-600 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
-                                    >
-                                        <User className="w-4 h-4" />
-                                        Thông tin cá nhân
-                                    </button>
-                                    <Link
-                                        to="/admin/change-password"
-                                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-600 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
-                                        onClick={() => setIsDropdownOpen(false)}
-                                    >
-                                        <Key className="w-4 h-4" />
-                                        Đổi mật khẩu
-                                    </Link>
+                                <div className="text-left hidden md:block">
+                                    <p className="text-slate-800 font-bold text-sm leading-tight">{user.name}</p>
+                                    <p className="text-xs text-slate-500 font-medium">{user.roleLabel}</p>
                                 </div>
-                                <div className="p-1 border-t border-slate-100">
-                                    <button
-                                        onClick={logout}
-                                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                    >
-                                        <LogOut className="w-4 h-4" />
-                                        Đăng xuất
-                                    </button>
+                                <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+                            </button>
+
+                            {isDropdownOpen && (
+                                <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-slate-100 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2">
+                                    <div className="p-3 border-b border-slate-100 bg-slate-50">
+                                        <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Tài khoản</p>
+                                        <p className="text-sm font-medium text-slate-800 truncate">{user.email}</p>
+                                    </div>
+                                    <div className="p-1">
+                                        <button
+                                            onClick={() => {
+                                                setIsEditProfileOpen(true);
+                                                setIsDropdownOpen(false);
+                                            }}
+                                            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-600 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                                        >
+                                            <User className="w-4 h-4" />
+                                            Thông tin cá nhân
+                                        </button>
+                                        <Link
+                                            to="/admin/change-password"
+                                            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-600 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                                            onClick={() => setIsDropdownOpen(false)}
+                                        >
+                                            <Key className="w-4 h-4" />
+                                            Đổi mật khẩu
+                                        </Link>
+                                    </div>
+                                    <div className="p-1 border-t border-slate-100">
+                                        <button
+                                            onClick={logout}
+                                            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                        >
+                                            <LogOut className="w-4 h-4" />
+                                            Đăng xuất
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
-                        )}
+                            )}
+                        </div>
                     </div>
                 </div>
-            </header>
+            </header >
 
             {/* Content */}
-            <main className="max-w-7xl mx-auto px-6 md:px-8 py-8 md:py-12">
+            < main className="max-w-7xl mx-auto px-6 md:px-8 py-8 md:py-12" >
                 {/* Welcome Card */}
-                {showWelcome && (
-                    <div className="relative overflow-hidden bg-gradient-to-r from-emerald-600 to-teal-600 rounded-3xl p-8 md:p-10 mb-10 shadow-xl shadow-emerald-500/20 text-white animate-in fade-in slide-in-from-top-4 duration-700 ease-out">
-                        <div className="relative z-10">
-                            <h2 className="text-3xl md:text-4xl font-extrabold mb-4">
-                                Xin chào, {user.name}! 👋
-                            </h2>
-                            <p className="text-emerald-100 text-lg max-w-2xl">
-                                {isAdmin && 'Trung tâm điều khiển hệ thống. Quản lý toàn bộ dữ liệu du lịch, tuyến điểm và người dùng.'}
-                                {isLecturer && 'Không gian làm việc dành cho giảng viên. Quản lý nội dung học tập và bài tập sinh viên.'}
-                                {!isAdmin && !isLecturer && 'Khám phá kho tàng kiến thức và tài nguyên du lịch phong phú.'}
-                            </p>
+                {
+                    showWelcome && (
+                        <div className="relative overflow-hidden bg-gradient-to-r from-emerald-600 to-teal-600 rounded-3xl p-8 md:p-10 mb-10 shadow-xl shadow-emerald-500/20 text-white animate-in fade-in slide-in-from-top-4 duration-700 ease-out">
+                            <div className="relative z-10">
+                                <h2 className="text-3xl md:text-4xl font-extrabold mb-4">
+                                    Xin chào, {user.name}! 👋
+                                </h2>
+                                <p className="text-emerald-100 text-lg max-w-2xl">
+                                    {isAdmin && 'Trung tâm điều khiển hệ thống. Quản lý toàn bộ dữ liệu du lịch, tuyến điểm và người dùng.'}
+                                    {isLecturer && 'Không gian làm việc dành cho giảng viên. Quản lý nội dung học tập và bài tập sinh viên.'}
+                                    {!isAdmin && !isLecturer && 'Khám phá kho tàng kiến thức và tài nguyên du lịch phong phú.'}
+                                </p>
+                            </div>
+                            {/* Decorative circles */}
+                            <div className="absolute top-0 right-0 -mt-10 -mr-10 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
+                            <div className="absolute bottom-0 left-0 -mb-10 -ml-10 w-40 h-40 bg-black/5 rounded-full blur-2xl"></div>
+                            <button
+                                onClick={() => setShowWelcome(false)}
+                                className="absolute top-4 right-4 p-2 hover:bg-white/10 rounded-full transition-colors"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
                         </div>
-                        {/* Decorative circles */}
-                        <div className="absolute top-0 right-0 -mt-10 -mr-10 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
-                        <div className="absolute bottom-0 left-0 -mb-10 -ml-10 w-40 h-40 bg-black/5 rounded-full blur-2xl"></div>
-                        <button
-                            onClick={() => setShowWelcome(false)}
-                            className="absolute top-4 right-4 p-2 hover:bg-white/10 rounded-full transition-colors"
-                        >
-                            <X className="w-5 h-5" />
-                        </button>
-                    </div>
-                )}
+                    )
+                }
 
                 {/* Stats Grid - Simplified */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
