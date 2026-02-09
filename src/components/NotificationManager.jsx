@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
-import { useSocket } from '../context/SocketContext';
+import { useSocket } from '../contexts/SocketContext';
 
 const NotificationManager = () => {
   const socket = useSocket();

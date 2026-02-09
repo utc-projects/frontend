@@ -1,6 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
-import { SocketProvider } from './context/SocketContext';
+import { SocketProvider } from './contexts/SocketContext';
 import NotificationManager from './components/NotificationManager';
 import { ProtectedRoute, AdminRoute, LecturerRoute, StudentRoute, PermissionRoute } from './components/ProtectedRoute';
 import LoginPage from './pages/auth/LoginPage';

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Bell, Check, ExternalLink } from 'lucide-react';
-import { useSocket } from '../context/SocketContext';
+import { useSocket } from '../contexts/SocketContext';
 import api from '../services/api';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
