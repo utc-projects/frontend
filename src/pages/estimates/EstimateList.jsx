@@ -8,16 +8,55 @@ const EstimateList = () => {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('All');
+
+    // Pagination State
+    const [page, setPage] = useState(1);
+    const [limit, setLimit] = useState(10);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalItems, setTotalItems] = useState(0);
+
     const navigate = useNavigate();
 
+    // Debounce search
+    useEffect(() => {
+        const delayDebounceFn = setTimeout(() => {
+            setPage(1); // Reset page on search change
+            fetchEstimates();
+        }, 500);
+
+        return () => clearTimeout(delayDebounceFn);
+    }, [searchTerm]);
+
+    // Fetch on filter/page change
     useEffect(() => {
         fetchEstimates();
-    }, []);
+    }, [page, limit, statusFilter]);
+
+    // Reset page when status filter changes
+    useEffect(() => {
+        setPage(1);
+    }, [statusFilter]);
 
     const fetchEstimates = async () => {
         try {
-            const res = await api.get('/estimates');
-            setEstimates(res.data.data);
+            setLoading(true);
+            const params = {
+                page,
+                limit,
+                search: searchTerm,
+                status: statusFilter
+            };
+            const res = await api.get('/estimates', { params });
+
+            if (res.data.pagination) {
+                setEstimates(res.data.data);
+                setTotalPages(res.data.pagination.totalPages);
+                setTotalItems(res.data.pagination.totalItems);
+            } else {
+                setEstimates(res.data.data);
+                setTotalPages(1);
+                setTotalItems(res.data.data.length);
+            }
         } catch (error) {
             console.error(error);
         } finally {
@@ -29,8 +68,7 @@ const EstimateList = () => {
         if (window.confirm(`Bạn có chắc muốn xóa dự toán [${code}] không?`)) {
             try {
                 await api.delete(`/estimates/${id}`);
-                // Optimistic update
-                setEstimates(prev => prev.filter(e => e._id !== id));
+                fetchEstimates(); // Refresh list after delete to keep pagination correct
             } catch (error) {
                 alert('Xóa thất bại');
             }
@@ -50,12 +88,7 @@ const EstimateList = () => {
         }
     };
 
-    const filteredEstimates = estimates.filter(est => {
-        const matchesSearch = est.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            est.code.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesStatus = statusFilter === 'All' || est.status === statusFilter;
-        return matchesSearch && matchesStatus;
-    });
+    // Removed client-side filteredEstimates logic, use estimates direct from state
 
     return (
         <div className="max-w-[1400px] mx-auto p-6 bg-gray-50 min-h-screen">
@@ -99,7 +132,7 @@ const EstimateList = () => {
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 {loading ? (
                     <div className="p-8 text-center text-gray-500">Đang tải dữ liệu...</div>
-                ) : filteredEstimates.length === 0 ? (
+                ) : estimates.length === 0 ? (
                     <div className="p-12 text-center">
                         <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                             <FileText className="text-gray-400" size={32} />
@@ -123,7 +156,7 @@ const EstimateList = () => {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100">
-                                {filteredEstimates.map(estimate => (
+                                {estimates.map(estimate => (
                                     <tr key={estimate._id} className="hover:bg-blue-50/50 transition-colors group">
                                         <td className="p-4 font-medium text-blue-600 whitespace-nowrap">
                                             {estimate.code}
@@ -195,6 +228,91 @@ const EstimateList = () => {
                         </table>
                     </div>
                 )}
+
+                {/* Pagination Controls */}
+                <div className="p-4 border-t border-gray-200 flex flex-col md:flex-row items-center justify-between gap-4 bg-gray-50">
+                    <div className="flex items-center gap-2 text-sm text-gray-500">
+                        <span>Hiển thị</span>
+                        <select
+                            value={limit}
+                            onChange={(e) => {
+                                setLimit(Number(e.target.value));
+                                setPage(1);
+                            }}
+                            className="border border-gray-200 rounded-lg px-2 py-1 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none bg-white cursor-pointer"
+                        >
+                            <option value={10}>10</option>
+                            <option value={25}>25</option>
+                            <option value={50}>50</option>
+                            <option value={100}>100</option>
+                        </select>
+                        <span>bản ghi mỗi trang</span>
+                        <span className="ml-2 text-gray-400 border-l border-gray-200 pl-3">
+                            Hiển thị {Math.min((page - 1) * limit + 1, totalItems)} - {Math.min(page * limit, totalItems)} trên tổng số {totalItems} bản ghi
+                        </span>
+                    </div>
+
+                    {totalPages > 1 && (
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => setPage(1)}
+                                disabled={page === 1}
+                                className="px-3 py-1.5 border border-gray-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white text-gray-600 transition-colors text-sm font-medium"
+                                title="Trang đầu"
+                            >
+                                «
+                            </button>
+                            <button
+                                onClick={() => setPage(prev => Math.max(prev - 1, 1))}
+                                disabled={page === 1}
+                                className="px-3 py-1.5 border border-gray-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white text-gray-600 transition-colors text-sm font-medium"
+                            >
+                                Trước
+                            </button>
+
+                            <div className="flex gap-1">
+                                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                                    .filter(p => p === 1 || p === totalPages || (p >= page - 1 && p <= page + 1))
+                                    .map((p, index, array) => {
+                                        // Add ellipsis
+                                        if (index > 0 && array[index - 1] !== p - 1) {
+                                            return (
+                                                <span key={`ellipsis-${p}`} className="px-2 py-1 text-gray-400">...</span>
+                                            );
+                                        }
+                                        return (
+                                            <button
+                                                key={p}
+                                                onClick={() => setPage(p)}
+                                                className={`min-w-[32px] h-8 flex items-center justify-center rounded-lg text-sm font-medium transition-colors ${page === p
+                                                        ? 'bg-blue-600 text-white shadow-sm'
+                                                        : 'text-gray-600 hover:bg-white border border-transparent hover:border-gray-200'
+                                                    }`}
+                                            >
+                                                {p}
+                                            </button>
+                                        );
+                                    })}
+                            </div>
+
+                            <button
+                                onClick={() => setPage(prev => Math.min(prev + 1, totalPages))}
+                                disabled={page === totalPages}
+                                className="px-3 py-1.5 border border-gray-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white text-gray-600 transition-colors text-sm font-medium"
+                            >
+                                Sau
+                            </button>
+                            <button
+                                onClick={() => setPage(totalPages)}
+                                disabled={page === totalPages}
+                                className="px-3 py-1.5 border border-gray-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white text-gray-600 transition-colors text-sm font-medium"
+                                title="Trang cuối"
+                            >
+                                »
+                            </button>
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );
