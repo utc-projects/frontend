@@ -34,6 +34,12 @@ const PointsPage = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [filterCategory, setFilterCategory] = useState('');
 
+    // Pagination state
+    const [page, setPage] = useState(1);
+    const [limit, setLimit] = useState(10);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalItems, setTotalItems] = useState(0);
+
     // File states
     const [newImages, setNewImages] = useState([]);
     const [newVideos, setNewVideos] = useState([]);
@@ -60,28 +66,44 @@ const PointsPage = () => {
     ];
 
     useEffect(() => {
-        fetchPoints();
-    }, []);
+        // Debounce search
+        const timeoutId = setTimeout(() => {
+            fetchPoints();
+        }, 500);
+        return () => clearTimeout(timeoutId);
+    }, [page, limit, filterCategory, searchTerm]);
 
     const fetchPoints = async () => {
         try {
             setLoading(true);
-            const response = await api.get('/points');
-            // Parse GeoJSON to flat array
-            const parsedPoints = response.data.features.map(feature => ({
-                _id: feature.properties._id,
-                name: feature.properties.name,
-                coordinates: feature.geometry.coordinates, // [lon, lat]
-                category: feature.properties.category,
-                role: feature.properties.role,
-                routeCount: feature.properties.routeCount,
-                images: feature.properties.images,
-                videos: feature.properties.videos,
-                highlights: feature.properties.highlights,
-                description: feature.properties.description,
-                status: feature.properties.status
-            }));
-            setPoints(parsedPoints);
+            const params = {
+                page,
+                limit
+            };
+            if (searchTerm) params.search = searchTerm;
+            if (filterCategory) params.category = filterCategory;
+
+            const response = await api.get('/points', { params });
+
+            const data = response.data;
+            if (data.pagination) {
+                setPoints(data.features.map(feature => ({
+                    _id: feature.properties._id,
+                    name: feature.properties.name,
+                    coordinates: feature.geometry.coordinates,
+                    category: feature.properties.category,
+                    role: feature.properties.role,
+                    routeCount: feature.properties.routeCount,
+                    images: feature.properties.images,
+                    videos: feature.properties.videos,
+                    highlights: feature.properties.highlights,
+                    description: feature.properties.description,
+                    status: feature.properties.status
+                })));
+                setTotalPages(data.pagination.totalPages);
+                setTotalItems(data.pagination.totalItems);
+            }
+
         } catch (err) {
             console.error('Failed to fetch points:', err);
         } finally {
@@ -372,7 +394,10 @@ const PointsPage = () => {
                                 type="text"
                                 placeholder="Tìm theo tên..."
                                 value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
+                                onChange={(e) => {
+                                    setSearchTerm(e.target.value);
+                                    setPage(1); // Reset to page 1 on search
+                                }}
                                 className="pl-10 pr-4 py-3 border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none w-48"
                             />
                         </div>
@@ -380,7 +405,10 @@ const PointsPage = () => {
                         {/* Filter by category */}
                         <select
                             value={filterCategory}
-                            onChange={(e) => setFilterCategory(e.target.value)}
+                            onChange={(e) => {
+                                setFilterCategory(e.target.value);
+                                setPage(1); // Reset to page 1 on filter change
+                            }}
                             className="px-4 py-3 border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none"
                         >
                             <option value="">Tất cả loại</option>
@@ -417,8 +445,6 @@ const PointsPage = () => {
                         </thead>
                         <tbody className="divide-y divide-slate-100">
                             {points
-                                .filter(p => !searchTerm || p.name.toLowerCase().includes(searchTerm.toLowerCase()))
-                                .filter(p => !filterCategory || p.category === filterCategory)
                                 .map((point) => (
                                     <tr key={point._id} className="hover:bg-slate-50/80 transition-colors group">
                                         <td className="p-5">
@@ -488,6 +514,91 @@ const PointsPage = () => {
                             )}
                         </tbody>
                     </table>
+                </div>
+
+                {/* Pagination Controls */}
+                <div className="p-5 border-t border-slate-100 flex flex-col md:flex-row items-center justify-between gap-4">
+                    <div className="flex items-center gap-2 text-sm text-slate-500">
+                        <span>Hiển thị</span>
+                        <select
+                            value={limit}
+                            onChange={(e) => {
+                                setLimit(Number(e.target.value));
+                                setPage(1);
+                            }}
+                            className="border border-slate-200 rounded-lg px-2 py-1 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none bg-white cursor-pointer"
+                        >
+                            <option value={10}>10</option>
+                            <option value={25}>25</option>
+                            <option value={50}>50</option>
+                            <option value={100}>100</option>
+                        </select>
+                        <span>bản ghi mỗi trang</span>
+                        <span className="ml-2 text-slate-400 border-l border-slate-200 pl-3">
+                            Hiển thị {Math.min((page - 1) * limit + 1, totalItems)} - {Math.min(page * limit, totalItems)} trên tổng số {totalItems} bản ghi
+                        </span>
+                    </div>
+
+                    {totalPages > 1 && (
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => setPage(1)}
+                                disabled={page === 1}
+                                className="px-3 py-1.5 border border-slate-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 text-slate-600 transition-colors text-sm font-medium"
+                                title="Trang đầu"
+                            >
+                                «
+                            </button>
+                            <button
+                                onClick={() => setPage(prev => Math.max(prev - 1, 1))}
+                                disabled={page === 1}
+                                className="px-3 py-1.5 border border-slate-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 text-slate-600 transition-colors text-sm font-medium"
+                            >
+                                Trước
+                            </button>
+
+                            <div className="flex gap-1">
+                                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                                    .filter(p => p === 1 || p === totalPages || (p >= page - 1 && p <= page + 1))
+                                    .map((p, index, array) => {
+                                        // Add ellipsis
+                                        if (index > 0 && array[index - 1] !== p - 1) {
+                                            return (
+                                                <span key={`ellipsis-${p}`} className="px-2 py-1 text-slate-400">...</span>
+                                            );
+                                        }
+                                        return (
+                                            <button
+                                                key={p}
+                                                onClick={() => setPage(p)}
+                                                className={`min-w-[32px] h-8 flex items-center justify-center rounded-lg text-sm font-medium transition-colors ${page === p
+                                                        ? 'bg-emerald-500 text-white shadow-emerald-500/30 shadow-sm'
+                                                        : 'text-slate-600 hover:bg-slate-50 border border-transparent hover:border-slate-200'
+                                                    }`}
+                                            >
+                                                {p}
+                                            </button>
+                                        );
+                                    })}
+                            </div>
+
+                            <button
+                                onClick={() => setPage(prev => Math.min(prev + 1, totalPages))}
+                                disabled={page === totalPages}
+                                className="px-3 py-1.5 border border-slate-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 text-slate-600 transition-colors text-sm font-medium"
+                            >
+                                Sau
+                            </button>
+                            <button
+                                onClick={() => setPage(totalPages)}
+                                disabled={page === totalPages}
+                                className="px-3 py-1.5 border border-slate-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 text-slate-600 transition-colors text-sm font-medium"
+                                title="Trang cuối"
+                            >
+                                »
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
 
