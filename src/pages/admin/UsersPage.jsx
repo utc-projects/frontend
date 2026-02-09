@@ -23,6 +23,13 @@ function UsersPage() {
     const [filterStatus, setFilterStatus] = useState('all');
     const [filterClass, setFilterClass] = useState('all');
     const [classes, setClasses] = useState([]);
+
+    // Pagination state
+    const [page, setPage] = useState(1);
+    const [limit, setLimit] = useState(10);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalItems, setTotalItems] = useState(0);
+
     const [modalOpen, setModalOpen] = useState(false);
     const [editingUser, setEditingUser] = useState(null);
     const [deleteConfirm, setDeleteConfirm] = useState(null);
@@ -37,9 +44,18 @@ function UsersPage() {
         studentId: '',
     });
 
+    // Reset to page 1 when filters change
     useEffect(() => {
-        fetchData();
-    }, []);
+        setPage(1);
+    }, [filterRole, filterStatus, searchTerm]);
+
+    // Fetch users when page, limit, or filters change
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            fetchData();
+        }, 300);
+        return () => clearTimeout(timer);
+    }, [page, limit, filterRole, filterStatus, searchTerm]);
 
     const fetchData = async () => {
         setLoading(true);
@@ -47,21 +63,38 @@ function UsersPage() {
         setLoading(false);
     };
 
-
-
     const fetchUsers = async () => {
         try {
-            // setLoading(true); // Handled in fetchData
-            const response = await api.get('/auth/users');
-            // Filter out current user
-            const filteredUsers = response.data.users.filter(
+            const params = {
+                page,
+                limit,
+                search: searchTerm,
+                role: filterRole,
+                status: filterStatus
+            };
+
+            const response = await api.get('/auth/users', { params });
+            const data = response.data;
+
+            // Filter out current user from the list if present (though backend pagination makes this tricky because we might filter out 1 item from a full page)
+            // Ideally backend handles "exclude current user" but let's do it here for safety, 
+            // accepting that valid page size might be (limit - 1) occasionally.
+            const filteredUsers = data.users.filter(
                 u => u._id !== currentUser._id
             );
+
             setUsers(filteredUsers);
+
+            if (data.pagination) {
+                setTotalPages(data.pagination.totalPages);
+                setTotalItems(data.pagination.totalItems);
+            } else {
+                setTotalPages(1);
+                setTotalItems(filteredUsers.length);
+            }
+
         } catch (error) {
             console.error('Error fetching users:', error);
-        } finally {
-            // setLoading(false);
         }
     };
 
@@ -177,17 +210,8 @@ function UsersPage() {
         }
     };
 
-    const filteredUsers = users.filter(user => {
-        const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            user.email.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesRole = filterRole === 'all' || user.role === filterRole;
-        const matchesStatus = filterStatus === 'all' ||
-            (filterStatus === 'active' && user.isActive) ||
-            (filterStatus === 'inactive' && !user.isActive);
-
-
-        return matchesSearch && matchesRole && matchesStatus;
-    });
+    // Use users directly as filtering is done on backend
+    const displayedUsers = users;
 
     if (!canView) {
         return (
@@ -222,7 +246,7 @@ function UsersPage() {
                             </span>
                             Quản lý Users
                         </h1>
-                        <p className="text-slate-500 text-lg ml-1">Quản lý tài khoản và phân quyền người dùng ({filteredUsers.length})</p>
+                        <p className="text-slate-500 text-lg ml-1">Quản lý tài khoản và phân quyền người dùng ({totalItems})</p>
                     </div>
 
                     <div className="flex flex-col md:flex-row gap-3">
@@ -266,7 +290,7 @@ function UsersPage() {
                                 className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white rounded-xl text-sm font-semibold shadow-lg shadow-rose-500/20 transition-all whitespace-nowrap"
                             >
                                 <Plus className="w-4 h-4" />
-                                Thêm User
+                                Theo User
                             </button>
                         )}
                     </div>
@@ -280,7 +304,7 @@ function UsersPage() {
                         <div className="flex items-center justify-center py-20">
                             <Loader2 className="w-8 h-8 text-rose-500 animate-spin" />
                         </div>
-                    ) : filteredUsers.length === 0 ? (
+                    ) : displayedUsers.length === 0 ? (
                         <div className="text-center py-20">
                             <Users className="w-16 h-16 text-slate-300 mx-auto mb-4" />
                             <p className="text-slate-500">Không tìm thấy người dùng nào</p>
@@ -298,7 +322,7 @@ function UsersPage() {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
-                                    {filteredUsers.map((user) => (
+                                    {displayedUsers.map((user) => (
                                         <tr key={user._id} className="hover:bg-slate-50/80 transition-colors group">
                                             <td className="p-5">
                                                 <div className="flex items-center gap-4">
@@ -372,7 +396,7 @@ function UsersPage() {
                                             </td>
                                         </tr>
                                     ))}
-                                    {filteredUsers.length === 0 && !loading && (
+                                    {displayedUsers.length === 0 && !loading && (
                                         <tr>
                                             <td colSpan="4" className="p-12 text-center text-slate-400">
                                                 <div className="flex flex-col items-center justify-center">
@@ -389,6 +413,91 @@ function UsersPage() {
                         </div>
                     )
                 }
+
+                {/* Pagination Controls */}
+                <div className="p-5 border-t border-slate-100 flex flex-col md:flex-row items-center justify-between gap-4">
+                    <div className="flex items-center gap-2 text-sm text-slate-500">
+                        <span>Hiển thị</span>
+                        <select
+                            value={limit}
+                            onChange={(e) => {
+                                setLimit(Number(e.target.value));
+                                setPage(1);
+                            }}
+                            className="border border-slate-200 rounded-lg px-2 py-1 focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 outline-none bg-white cursor-pointer"
+                        >
+                            <option value={10}>10</option>
+                            <option value={25}>25</option>
+                            <option value={50}>50</option>
+                            <option value={100}>100</option>
+                        </select>
+                        <span>bản ghi mỗi trang</span>
+                        <span className="ml-2 text-slate-400 border-l border-slate-200 pl-3">
+                            Hiển thị {Math.min((page - 1) * limit + 1, totalItems)} - {Math.min(page * limit, totalItems)} trên tổng số {totalItems} bản ghi
+                        </span>
+                    </div>
+
+                    {totalPages > 1 && (
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => setPage(1)}
+                                disabled={page === 1}
+                                className="px-3 py-1.5 border border-slate-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 text-slate-600 transition-colors text-sm font-medium"
+                                title="Trang đầu"
+                            >
+                                «
+                            </button>
+                            <button
+                                onClick={() => setPage(prev => Math.max(prev - 1, 1))}
+                                disabled={page === 1}
+                                className="px-3 py-1.5 border border-slate-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 text-slate-600 transition-colors text-sm font-medium"
+                            >
+                                Trước
+                            </button>
+
+                            <div className="flex gap-1">
+                                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                                    .filter(p => p === 1 || p === totalPages || (p >= page - 1 && p <= page + 1))
+                                    .map((p, index, array) => {
+                                        // Add ellipsis
+                                        if (index > 0 && array[index - 1] !== p - 1) {
+                                            return (
+                                                <span key={`ellipsis-${p}`} className="px-2 py-1 text-slate-400">...</span>
+                                            );
+                                        }
+                                        return (
+                                            <button
+                                                key={p}
+                                                onClick={() => setPage(p)}
+                                                className={`min-w-[32px] h-8 flex items-center justify-center rounded-lg text-sm font-medium transition-colors ${page === p
+                                                        ? 'bg-rose-500 text-white shadow-rose-500/30 shadow-sm'
+                                                        : 'text-slate-600 hover:bg-slate-50 border border-transparent hover:border-slate-200'
+                                                    }`}
+                                            >
+                                                {p}
+                                            </button>
+                                        );
+                                    })}
+                            </div>
+
+                            <button
+                                onClick={() => setPage(prev => Math.min(prev + 1, totalPages))}
+                                disabled={page === totalPages}
+                                className="px-3 py-1.5 border border-slate-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 text-slate-600 transition-colors text-sm font-medium"
+                            >
+                                Sau
+                            </button>
+                            <button
+                                onClick={() => setPage(totalPages)}
+                                disabled={page === totalPages}
+                                className="px-3 py-1.5 border border-slate-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 text-slate-600 transition-colors text-sm font-medium"
+                                title="Trang cuối"
+                            >
+                                »
+                            </button>
+                        </div>
+                    )}
+                </div>
             </div>
 
             {/* Add/Edit Modal */}
