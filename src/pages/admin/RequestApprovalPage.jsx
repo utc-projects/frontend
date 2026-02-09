@@ -91,13 +91,6 @@ const RequestApprovalPage = () => {
 
     return (
         <div className="p-6 max-w-7xl mx-auto space-y-6">
-            <button
-                onClick={() => navigate('/dashboard')}
-                className="group flex items-center text-slate-500 hover:text-blue-600 transition-colors mb-2 font-medium"
-            >
-                <ArrowLeft className="w-5 h-5 mr-2 group-hover:-translate-x-1 transition-transform" />
-                Quay lại Dashboard
-            </button>
 
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>

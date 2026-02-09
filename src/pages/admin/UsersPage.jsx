@@ -212,13 +212,6 @@ function UsersPage() {
             {/* Header Section */}
             <div className="max-w-7xl mx-auto mb-8">
                 {/* Back Button */}
-                <button
-                    onClick={() => navigate('/dashboard')}
-                    className="group flex items-center text-slate-500 hover:text-emerald-600 transition-colors mb-6 font-medium"
-                >
-                    <ArrowLeft className="w-5 h-5 mr-2 group-hover:-translate-x-1 transition-transform" />
-                    Quay lại Dashboard
-                </button>
 
                 {/* Header & Actions */}
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
