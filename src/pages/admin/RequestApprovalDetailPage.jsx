@@ -41,10 +41,6 @@ const RequestApprovalDetailPage = () => {
     const navigate = useNavigate();
     const { user, isAdmin, isLecturer } = useAuth();
 
-    // DEBUG: Check if component mounts
-    // alert('DEBUG: RequestApprovalDetailPage Mounted');
-    console.log('DEBUG: RequestApprovalDetailPage Mounted, User:', user);
-
     // State
     const [request, setRequest] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -94,23 +90,20 @@ const RequestApprovalDetailPage = () => {
             const token = localStorage.getItem('token');
             const config = { headers: { Authorization: `Bearer ${token}` } };
 
-            // Adjust endpoint based on role
-            const url = user.role === 'student'
-                ? `${API_URL}/api/change-requests/my-requests`
-                : `${API_URL}/api/change-requests`;
+            // Fetch single request directly
+            const url = `${API_URL}/api/change-requests/${id}`;
 
             const { data } = await axios.get(url, config);
 
-            // Ensure ID comparison is safe (string vs string)
-            const found = data.find(r => String(r._id) === String(id));
-
-            if (!found) {
-                console.warn('Request not found in list');
+            // Access control check (optional, backend should handle it but good for UI)
+            if (user.role === 'student' && data.requester?._id !== user._id && data.requester !== user._id) {
+                // If backend doesn't filter, we might want to warn or redirect, 
+                // but let's assume if backend returned it, it's okay or backend will handle 403
             }
 
-            setRequest(found || null);
+            setRequest(data);
 
-            if (found && found.reviewNote) setReviewNote(found.reviewNote);
+            if (data && data.reviewNote) setReviewNote(data.reviewNote);
 
         } catch (error) {
             console.error('Error fetching request:', error);

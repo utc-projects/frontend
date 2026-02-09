@@ -22,6 +22,13 @@ const RequestApprovalPage = () => {
     const { user, isStudent, isAdmin, isLecturer } = useAuth();
     const [activeTab, setActiveTab] = useState('all');
     const [loading, setLoading] = useState(true);
+
+    // Pagination State
+    const [page, setPage] = useState(1);
+    const [limit, setLimit] = useState(10);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalItems, setTotalItems] = useState(0);
+
     const navigate = useNavigate();
 
     // Set default tab for students
@@ -33,37 +40,52 @@ const RequestApprovalPage = () => {
         }
     }, [isStudent]);
 
+    // Reset to page 1 when tab changes
+    useEffect(() => {
+        setPage(1);
+    }, [activeTab]);
 
     useEffect(() => {
         if (user) {
             fetchRequests();
         }
-    }, [activeTab, user]);
+    }, [activeTab, user, page, limit]);
 
     const fetchRequests = async () => {
         try {
             setLoading(true);
             const token = localStorage.getItem('token');
-            const config = { headers: { Authorization: `Bearer ${token}` } };
+            const config = {
+                headers: { Authorization: `Bearer ${token}` },
+                params: {
+                    page,
+                    limit,
+                    status: activeTab === 'all' || activeTab === 'my-requests' ? undefined : activeTab
+                }
+            };
 
             const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5001';
             let url = `${apiUrl}/api/change-requests`;
             if (activeTab === 'my-requests' || isStudent) {
                 url = `${apiUrl}/api/change-requests/my-requests`;
+                // For student tab logic, we might not need status param unless we want to filter their own requests
+                // But current UI only has one "my-requests" tab for students or admins viewing my-requests
+                if (config.params.status === 'my-requests') delete config.params.status;
             }
 
             const { data } = await axios.get(url, config);
 
-            // Client-side filtering for tabs (if admin)
-            if (activeTab === 'all') {
-                setRequests(data);
-            } else if (activeTab === 'pending') {
-                setRequests(data.filter(r => r.status === 'pending'));
-            } else if (activeTab === 'history') {
-                setRequests(data.filter(r => r.status !== 'pending'));
+            if (data.pagination) {
+                setRequests(data.requests);
+                setTotalPages(data.pagination.totalPages);
+                setTotalItems(data.pagination.totalItems);
             } else {
-                setRequests(data);
+                // Fallback for non-paginated response if any
+                setRequests(Array.isArray(data) ? data : []);
+                setTotalPages(1);
+                setTotalItems(Array.isArray(data) ? data.length : 0);
             }
+
         } catch (error) {
             console.error('Error fetching requests:', error);
         } finally {
@@ -147,51 +169,138 @@ const RequestApprovalPage = () => {
                         <p>Không có yêu cầu nào</p>
                     </div>
                 ) : (
-                    <div className="divide-y divide-slate-100">
-                        {requests.map(req => (
-                            <div key={req._id} className="p-4 hover:bg-slate-50 transition-colors flex items-center justify-between group">
-                                <div className="flex items-center gap-4">
-                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${req.status === 'pending' ? 'bg-yellow-100 text-yellow-600' :
-                                        req.status === 'approved' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
-                                        }`}>
-                                        {req.status === 'pending' ? <Clock className="w-5 h-5" /> :
-                                            req.status === 'approved' ? <CheckCircle className="w-5 h-5" /> : <XCircle className="w-5 h-5" />}
-                                    </div>
-                                    <div>
-                                        <div className="flex items-center gap-2 mb-1">
-                                            {getTypeIcon(req.type)}
-                                            <span className="font-semibold text-slate-700 capitalize">{req.type}</span>
-                                            <span className="text-slate-300">•</span>
-                                            {getActionBadges(req.action)}
+                    <>
+                        <div className="divide-y divide-slate-100">
+                            {requests.map(req => (
+                                <div key={req._id} className="p-4 hover:bg-slate-50 transition-colors flex items-center justify-between group">
+                                    <div className="flex items-center gap-4">
+                                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${req.status === 'pending' ? 'bg-yellow-100 text-yellow-600' :
+                                            req.status === 'approved' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
+                                            }`}>
+                                            {req.status === 'pending' ? <Clock className="w-5 h-5" /> :
+                                                req.status === 'approved' ? <CheckCircle className="w-5 h-5" /> : <XCircle className="w-5 h-5" />}
                                         </div>
-                                        <div className="text-sm text-slate-500 flex items-center gap-2">
-                                            <span>Bởi <span className="font-medium text-slate-700">{req.requester?.name || 'Unknown'}</span></span>
-                                            <span>•</span>
-                                            <span>{new Date(req.createdAt).toLocaleString()}</span>
-                                            {req.status !== 'pending' && req.reviewer && (
-                                                <>
-                                                    <span>•</span>
-                                                    <span className={req.status === 'approved' ? 'text-green-600' : 'text-red-600'}>
-                                                        {req.status === 'approved' ? 'Đã duyệt bởi' : 'Đã từ chối bởi'} <span className="font-medium">{req.reviewer?.name}</span>
-                                                    </span>
-                                                </>
+                                        <div>
+                                            <div className="flex items-center gap-2 mb-1">
+                                                {getTypeIcon(req.type)}
+                                                <span className="font-semibold text-slate-700 capitalize">{req.type}</span>
+                                                <span className="text-slate-300">•</span>
+                                                {getActionBadges(req.action)}
+                                            </div>
+                                            <div className="text-sm text-slate-500 flex items-center gap-2">
+                                                <span>Bởi <span className="font-medium text-slate-700">{req.requester?.name || 'Unknown'}</span></span>
+                                                <span>•</span>
+                                                <span>{new Date(req.createdAt).toLocaleString()}</span>
+                                                {req.status !== 'pending' && req.reviewer && (
+                                                    <>
+                                                        <span>•</span>
+                                                        <span className={req.status === 'approved' ? 'text-green-600' : 'text-red-600'}>
+                                                            {req.status === 'approved' ? 'Đã duyệt bởi' : 'Đã từ chối bởi'} <span className="font-medium">{req.reviewer?.name}</span>
+                                                        </span>
+                                                    </>
+                                                )}
+                                            </div>
+                                            {req.reviewNote && (
+                                                <p className="text-xs text-slate-500 mt-1 italic">Note: {req.reviewNote}</p>
                                             )}
                                         </div>
-                                        {req.reviewNote && (
-                                            <p className="text-xs text-slate-500 mt-1 italic">Note: {req.reviewNote}</p>
-                                        )}
                                     </div>
+                                    <button
+                                        onClick={() => navigate(`/admin/approvals/${req._id}`)}
+                                        className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors border border-transparent hover:border-blue-100"
+                                        title="Xem chi tiết"
+                                    >
+                                        <Eye className="w-5 h-5" />
+                                    </button>
                                 </div>
-                                <button
-                                    onClick={() => navigate(`/admin/approvals/${req._id}`)}
-                                    className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors border border-transparent hover:border-blue-100"
-                                    title="Xem chi tiết"
+                            ))}
+                        </div>
+
+                        {/* Pagination Controls */}
+                        <div className="p-5 border-t border-slate-100 flex flex-col md:flex-row items-center justify-between gap-4">
+                            <div className="flex items-center gap-2 text-sm text-slate-500">
+                                <span>Hiển thị</span>
+                                <select
+                                    value={limit}
+                                    onChange={(e) => {
+                                        setLimit(Number(e.target.value));
+                                        setPage(1);
+                                    }}
+                                    className="border border-slate-200 rounded-lg px-2 py-1 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none bg-white cursor-pointer"
                                 >
-                                    <Eye className="w-5 h-5" />
-                                </button>
+                                    <option value={10}>10</option>
+                                    <option value={25}>25</option>
+                                    <option value={50}>50</option>
+                                    <option value={100}>100</option>
+                                </select>
+                                <span>bản ghi mỗi trang</span>
+                                <span className="ml-2 text-slate-400 border-l border-slate-200 pl-3">
+                                    Hiển thị {Math.min((page - 1) * limit + 1, totalItems)} - {Math.min(page * limit, totalItems)} trên tổng số {totalItems} bản ghi
+                                </span>
                             </div>
-                        ))}
-                    </div>
+
+                            {totalPages > 1 && (
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={() => setPage(1)}
+                                        disabled={page === 1}
+                                        className="px-3 py-1.5 border border-slate-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 text-slate-600 transition-colors text-sm font-medium"
+                                        title="Trang đầu"
+                                    >
+                                        «
+                                    </button>
+                                    <button
+                                        onClick={() => setPage(prev => Math.max(prev - 1, 1))}
+                                        disabled={page === 1}
+                                        className="px-3 py-1.5 border border-slate-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 text-slate-600 transition-colors text-sm font-medium"
+                                    >
+                                        Trước
+                                    </button>
+
+                                    <div className="flex gap-1">
+                                        {Array.from({ length: totalPages }, (_, i) => i + 1)
+                                            .filter(p => p === 1 || p === totalPages || (p >= page - 1 && p <= page + 1))
+                                            .map((p, index, array) => {
+                                                // Add ellipsis
+                                                if (index > 0 && array[index - 1] !== p - 1) {
+                                                    return (
+                                                        <span key={`ellipsis-${p}`} className="px-2 py-1 text-slate-400">...</span>
+                                                    );
+                                                }
+                                                return (
+                                                    <button
+                                                        key={p}
+                                                        onClick={() => setPage(p)}
+                                                        className={`min-w-[32px] h-8 flex items-center justify-center rounded-lg text-sm font-medium transition-colors ${page === p
+                                                                ? 'bg-blue-500 text-white shadow-blue-500/30 shadow-sm'
+                                                                : 'text-slate-600 hover:bg-slate-50 border border-transparent hover:border-slate-200'
+                                                            }`}
+                                                    >
+                                                        {p}
+                                                    </button>
+                                                );
+                                            })}
+                                    </div>
+
+                                    <button
+                                        onClick={() => setPage(prev => Math.min(prev + 1, totalPages))}
+                                        disabled={page === totalPages}
+                                        className="px-3 py-1.5 border border-slate-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 text-slate-600 transition-colors text-sm font-medium"
+                                    >
+                                        Sau
+                                    </button>
+                                    <button
+                                        onClick={() => setPage(totalPages)}
+                                        disabled={page === totalPages}
+                                        className="px-3 py-1.5 border border-slate-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 text-slate-600 transition-colors text-sm font-medium"
+                                        title="Trang cuối"
+                                    >
+                                        »
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    </>
                 )}
             </div>
         </div>
