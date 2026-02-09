@@ -7,20 +7,30 @@ function MapPage() {
     const [selectedRoute, setSelectedRoute] = useState(null);
     const [selectedLocation, setSelectedLocation] = useState(null);
 
+    const handleRouteSelect = (route) => {
+        setSelectedRoute(route);
+        if (route) setSelectedLocation(null);
+    };
+
+    const handleLocationSelect = (location) => {
+        setSelectedLocation(location);
+        if (location) setSelectedRoute(null);
+    };
+
     return (
         <div className="h-screen flex bg-slate-50">
             {/* Sidebar */}
             <Sidebar
                 selectedRoute={selectedRoute}
-                onRouteSelect={setSelectedRoute}
+                onRouteSelect={handleRouteSelect}
             />
 
             {/* Map */}
             <div className="flex-1 relative">
-                <SearchBox onSelect={setSelectedLocation} />
+                <SearchBox onSelect={handleLocationSelect} />
                 <MapComponent
                     selectedRoute={selectedRoute}
-                    onRouteSelect={setSelectedRoute}
+                    onRouteSelect={handleRouteSelect}
                     selectedLocation={selectedLocation}
                 />
             </div>
