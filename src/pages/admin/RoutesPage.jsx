@@ -24,7 +24,7 @@ function RoutesPage() {
             setLoading(true);
             const [routesData, pointsData] = await Promise.all([
                 routeService.getRoutes(),
-                mapService.getPoints()
+                mapService.getPoints({ limit: 9999 })
             ]);
             setRoutes(routesData);
 
