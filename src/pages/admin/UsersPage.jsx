@@ -5,7 +5,8 @@ import api from '../../services/api';
 
 import {
     Users, ArrowLeft, Plus, Search, Edit2, Trash2, X,
-    Shield, GraduationCap, BookOpen, CheckCircle, XCircle, Loader2
+    Shield, GraduationCap, BookOpen, CheckCircle, XCircle, Loader2,
+    KeyRound, Copy, Check
 } from 'lucide-react';
 
 function UsersPage() {
@@ -34,6 +35,9 @@ function UsersPage() {
     const [editingUser, setEditingUser] = useState(null);
     const [deleteConfirm, setDeleteConfirm] = useState(null);
     const [toggleActiveConfirm, setToggleActiveConfirm] = useState(null);
+    const [resetPasswordConfirm, setResetPasswordConfirm] = useState(null);
+    const [resetPasswordResult, setResetPasswordResult] = useState(null);
+    const [copied, setCopied] = useState(false);
     const [saving, setSaving] = useState(false);
     const [formData, setFormData] = useState({
         name: '',
@@ -183,6 +187,28 @@ function UsersPage() {
             fetchUsers();
         } catch (error) {
             console.error('Error toggling user status:', error);
+        }
+    };
+
+    const handleResetPassword = async (userId) => {
+        try {
+            const response = await api.put(`/auth/users/${userId}/reset-password`);
+            setResetPasswordConfirm(null);
+            setResetPasswordResult(response.data.newPassword);
+            setCopied(false);
+        } catch (error) {
+            console.error('Error resetting password:', error);
+            alert(error.response?.data?.message || 'Có lỗi xảy ra khi reset mật khẩu');
+        }
+    };
+
+    const handleCopyPassword = async () => {
+        try {
+            await navigator.clipboard.writeText(resetPasswordResult);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        } catch (error) {
+            console.error('Failed to copy:', error);
         }
     };
 
@@ -375,6 +401,13 @@ function UsersPage() {
                                                                 title={user.isActive ? 'Vô hiệu hóa' : 'Kích hoạt'}
                                                             >
                                                                 {user.isActive ? <XCircle className="w-5 h-5" /> : <CheckCircle className="w-5 h-5" />}
+                                                            </button>
+                                                            <button
+                                                                onClick={() => setResetPasswordConfirm(user)}
+                                                                className="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
+                                                                title="Reset mật khẩu"
+                                                            >
+                                                                <KeyRound className="w-5 h-5" />
                                                             </button>
                                                             <button
                                                                 onClick={() => handleOpenModal(user)}
@@ -700,13 +733,83 @@ function UsersPage() {
                                 <button
                                     onClick={() => handleToggleActive(toggleActiveConfirm._id)}
                                     className={`flex-1 px-4 py-3 text-white rounded-xl font-medium transition-all ${toggleActiveConfirm.isActive
-                                            ? 'bg-orange-500 hover:bg-orange-600'
-                                            : 'bg-emerald-500 hover:bg-emerald-600'
+                                        ? 'bg-orange-500 hover:bg-orange-600'
+                                        : 'bg-emerald-500 hover:bg-emerald-600'
                                         }`}
                                 >
                                     {toggleActiveConfirm.isActive ? 'Vô hiệu hóa' : 'Kích hoạt'}
                                 </button>
                             </div>
+                        </div>
+                    </div>
+                )
+            }
+            {/* Reset Password Confirmation Modal */}
+            {
+                resetPasswordConfirm && (
+                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                        <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl p-6 text-center">
+                            <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <KeyRound className="w-8 h-8 text-amber-600" />
+                            </div>
+                            <h3 className="text-lg font-bold text-slate-800 mb-2">Xác nhận reset mật khẩu</h3>
+                            <p className="text-slate-500 mb-6">
+                                Bạn có chắc chắn muốn reset mật khẩu của người dùng <strong>{resetPasswordConfirm.name}</strong>?
+                                Mật khẩu hiện tại sẽ bị thay thế bằng mật khẩu ngẫu nhiên mới.
+                            </p>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => setResetPasswordConfirm(null)}
+                                    className="flex-1 px-4 py-3 text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl font-medium transition-all"
+                                >
+                                    Hủy
+                                </button>
+                                <button
+                                    onClick={() => handleResetPassword(resetPasswordConfirm._id)}
+                                    className="flex-1 px-4 py-3 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-medium transition-all"
+                                >
+                                    Reset mật khẩu
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
+
+            {/* Reset Password Result Modal */}
+            {
+                resetPasswordResult && (
+                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                        <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl p-6 text-center">
+                            <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <CheckCircle className="w-8 h-8 text-emerald-600" />
+                            </div>
+                            <h3 className="text-lg font-bold text-slate-800 mb-2">Reset mật khẩu thành công!</h3>
+                            <p className="text-slate-500 mb-4">Mật khẩu mới đã được tạo. Vui lòng sao chép và gửi cho người dùng.</p>
+                            <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-3 mb-6">
+                                <code className="flex-1 text-lg font-mono font-bold text-slate-800 select-all text-center">
+                                    {resetPasswordResult}
+                                </code>
+                                <button
+                                    onClick={handleCopyPassword}
+                                    className={`p-2 rounded-lg transition-all ${copied
+                                        ? 'bg-emerald-100 text-emerald-600'
+                                        : 'bg-slate-200 text-slate-500 hover:bg-slate-300 hover:text-slate-700'
+                                        }`}
+                                    title="Sao chép"
+                                >
+                                    {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
+                                </button>
+                            </div>
+                            {copied && (
+                                <p className="text-emerald-600 text-sm font-medium mb-4">Đã sao chép!</p>
+                            )}
+                            <button
+                                onClick={() => setResetPasswordResult(null)}
+                                className="w-full px-4 py-3 bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white rounded-xl font-medium transition-all"
+                            >
+                                Đóng
+                            </button>
                         </div>
                     </div>
                 )
