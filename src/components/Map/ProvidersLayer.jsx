@@ -80,7 +80,7 @@ function ProvidersLayer({ data, visibleTypes, selectedLocation }) {
 
     const popupContent = `
       <div class="provider-popup" style="min-width: 300px; font-family: system-ui, sans-serif;">
-        <div style="background: linear-gradient(135deg, ${getMarkerColor(props.serviceType)}, ${getMarkerColor(props.serviceType)}dd); padding: 12px; margin: -10px -10px 12px -10px; border-radius: 4px 4px 0 0;">
+        <div style="background: linear-gradient(135deg, ${getMarkerColor(props.serviceType)}, ${getMarkerColor(props.serviceType)}dd); padding: 14px 16px; padding-right: 44px; border-radius: 12px 12px 0 0;">
           <div style="display: flex; align-items: center; gap: 8px;">
             <span style="font-size: 28px;">${getMarkerIcon(feature)}</span>
             <div style="flex: 1;">
@@ -91,7 +91,7 @@ function ProvidersLayer({ data, visibleTypes, selectedLocation }) {
           </div>
         </div>
         
-        <div style="padding: 0 4px;">
+        <div style="padding: 12px 16px;">
           <div style="display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap;">
             <span style="display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 500; ${priceRangeStyle[props.priceRange] || ''}">
               💰 ${props.priceRange}

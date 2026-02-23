@@ -41,12 +41,12 @@ function RoutesLayer({ data, selectedRoute, onRouteSelect }) {
 
     const popupContent = `
       <div class="route-popup" style="min-width: 280px; font-family: system-ui, sans-serif;">
-        <div style="background: linear-gradient(135deg, #6366f1, #8b5cf6); padding: 12px; margin: -10px -10px 12px -10px; border-radius: 4px 4px 0 0;">
+        <div style="background: linear-gradient(135deg, #6366f1, #8b5cf6); padding: 14px 16px; padding-right: 44px; border-radius: 12px 12px 0 0;">
           <h3 style="margin: 0; color: white; font-size: 16px; font-weight: 600;">🗺️ ${props.routeName}</h3>
           ${props.isRoadRoute ? '<span style="color: rgba(255,255,255,0.8); font-size: 10px; background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 4px; margin-top: 4px; display: inline-block;">🛣️ Đường bộ thực tế</span>' : ''}
         </div>
         
-        <div style="padding: 0 4px;">
+        <div style="padding: 12px 16px;">
           <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-bottom: 12px;">
             <div style="background: #f1f5f9; padding: 8px 4px; border-radius: 6px; text-align: center;">
               <p style="margin: 0; font-size: 10px; color: #64748b;">Thời gian</p>

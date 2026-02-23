@@ -32,14 +32,14 @@ function PointsLayer({ data, selectedLocation }) {
 
     const popupContent = `
       <div class="point-popup" style="min-width: 280px; font-family: system-ui, sans-serif;">
-        <div style="background: linear-gradient(135deg, #8b5cf6, #ec4899); padding: 12px; margin: -10px -10px 12px -10px; border-radius: 4px 4px 0 0;">
+        <div style="background: linear-gradient(135deg, #8b5cf6, #ec4899); padding: 14px 16px; padding-right: 44px; border-radius: 12px 12px 0 0;">
           <h3 style="margin: 0; color: white; font-size: 16px; font-weight: 600;">${props.name}</h3>
           <span style="color: rgba(255,255,255,0.8); font-size: 12px; display: inline-block; margin-top: 4px; background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 12px;">
             ${props.category}
           </span>
         </div>
         
-        <div style="padding: 0 4px;">
+        <div style="padding: 12px 16px;">
           <div style="margin-bottom: 12px;">
             <p style="margin: 0 0 4px 0; font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Vai trò</p>
             <p style="margin: 0; color: #334155; font-size: 13px;">${props.role}</p>
