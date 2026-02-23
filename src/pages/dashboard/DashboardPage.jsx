@@ -26,9 +26,9 @@ function DashboardPage() {
                     api.get('/providers'),
                 ]);
                 setStats({
-                    routes: Array.isArray(routesRes.data) ? routesRes.data.length : (routesRes.data.features?.length || 0),
-                    points: pointsRes.data.features?.length || 0,
-                    providers: providersRes.data.features?.length || 0,
+                    routes: Array.isArray(routesRes.data) ? routesRes.data.length : 0,
+                    points: pointsRes.data.pagination?.totalItems || pointsRes.data.features?.length || 0,
+                    providers: providersRes.data.pagination?.totalItems || providersRes.data.features?.length || 0,
                 });
             } catch (err) {
                 console.error('Failed to fetch stats:', err);
@@ -91,7 +91,7 @@ function DashboardPage() {
                 )}
 
                 {/* Stats Grid - Simplified */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
                     <div className="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm flex items-center gap-5 hover:shadow-md transition-shadow">
                         <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center shadow-inner">
                             <Waypoints className="w-8 h-8" />
@@ -108,6 +108,15 @@ function DashboardPage() {
                         <div>
                             <p className="text-3xl font-extrabold text-slate-800">{stats.points}</p>
                             <p className="text-sm text-slate-500 font-medium uppercase tracking-wide">Điểm du lịch</p>
+                        </div>
+                    </div>
+                    <div className="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm flex items-center gap-5 hover:shadow-md transition-shadow">
+                        <div className="w-16 h-16 bg-orange-50 text-orange-600 rounded-2xl flex items-center justify-center shadow-inner">
+                            <Building2 className="w-8 h-8" />
+                        </div>
+                        <div>
+                            <p className="text-3xl font-extrabold text-slate-800">{stats.providers}</p>
+                            <p className="text-sm text-slate-500 font-medium uppercase tracking-wide">Nhà cung cấp DV</p>
                         </div>
                     </div>
                 </div>
