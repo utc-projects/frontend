@@ -7,6 +7,7 @@ function LayerControl({ layers, toggleLayer }) {
     const layerItems = [
         { key: 'routes', label: 'Tuyến du lịch', icon: '🗺️' },
         { key: 'points', label: 'Điểm du lịch', icon: '📍' },
+        { key: 'providers', label: 'Nhà cung cấp DV', icon: '🏨' },
     ];
 
     return (

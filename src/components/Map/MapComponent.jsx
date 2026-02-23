@@ -151,10 +151,11 @@ function MapComponent({ selectedRoute, onRouteSelect, selectedLocation }) {
     const [loading, setLoading] = useState(true);
     const [mediaViewer, setMediaViewer] = useState({ open: false, items: [], index: 0 });
 
-    // Layer visibility state - simplified
+    // Layer visibility state
     const [layers, setLayers] = useState({
         routes: true,
         points: true,
+        providers: true,
     });
 
     // All provider types always visible
@@ -257,8 +258,8 @@ function MapComponent({ selectedRoute, onRouteSelect, selectedLocation }) {
                 {/* Route Start/End Markers */}
                 <RouteEndpointsMarkers routes={routes} selectedRoute={selectedRoute} />
 
-                {/* Providers Layer - Always visible */}
-                {providers && (
+                {/* Providers Layer */}
+                {layers.providers && providers && (
                     <ProvidersLayer
                         data={providers}
                         visibleTypes={providerTypes}
