@@ -2,7 +2,7 @@ import { GeoJSON } from 'react-leaflet';
 import { useEffect, useRef } from 'react';
 import L from 'leaflet';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+const API_URL = import.meta.env.VITE_API_URL;
 
 function ProvidersLayer({ data, visibleTypes, selectedLocation }) {
   // Filter features by visible types

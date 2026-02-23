@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../services/api';
 import {
     ArrowLeft,
     CheckCircle,
@@ -57,34 +57,23 @@ const RequestApprovalPage = () => {
     const fetchRequests = async () => {
         try {
             setLoading(true);
-            const token = localStorage.getItem('token');
-            // Basic params
             const params = {
                 page,
                 limit,
                 status: activeTab === 'all' || activeTab === 'my-requests' ? undefined : activeTab,
             };
 
-            // Add type filter if selected
             if (filterType !== 'all') {
                 params.type = filterType;
             }
 
-            const config = {
-                headers: { Authorization: `Bearer ${token}` },
-                params
-            };
-
-            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5001';
-            let url = `${apiUrl}/api/change-requests`;
+            let endpoint = '/change-requests';
             if (activeTab === 'my-requests' || isStudent) {
-                url = `${apiUrl}/api/change-requests/my-requests`;
-                // For student tab logic, we might not need status param unless we want to filter their own requests
-                // But current UI only has one "my-requests" tab for students or admins viewing my-requests
-                if (config.params.status === 'my-requests') delete config.params.status;
+                endpoint = '/change-requests/my-requests';
+                if (params.status === 'my-requests') delete params.status;
             }
 
-            const { data } = await axios.get(url, config);
+            const { data } = await api.get(endpoint, { params });
 
             if (data.pagination) {
                 setRequests(data.requests);

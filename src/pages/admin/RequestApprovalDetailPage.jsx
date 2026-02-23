@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../../services/api';
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
@@ -34,7 +34,7 @@ let DefaultIcon = L.icon({
 
 L.Marker.prototype.options.icon = DefaultIcon;
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+const API_URL = import.meta.env.VITE_API_URL;
 
 const RequestApprovalDetailPage = () => {
     const { id } = useParams();
@@ -63,10 +63,7 @@ const RequestApprovalDetailPage = () => {
 
     const fetchPoints = async () => {
         try {
-            const token = localStorage.getItem('token');
-            const { data } = await axios.get(`${API_URL}/api/points`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const { data } = await api.get('/points');
             const map = {};
             // Handle GeoJSON
             if (data.features && Array.isArray(data.features)) {
@@ -87,13 +84,9 @@ const RequestApprovalDetailPage = () => {
     const fetchRequest = async () => {
         try {
             setLoading(true);
-            const token = localStorage.getItem('token');
-            const config = { headers: { Authorization: `Bearer ${token}` } };
+            const url = `/change-requests/${id}`;
 
-            // Fetch single request directly
-            const url = `${API_URL}/api/change-requests/${id}`;
-
-            const { data } = await axios.get(url, config);
+            const { data } = await api.get(url);
 
             // Access control check (optional, backend should handle it but good for UI)
             if (user.role === 'student' && data.requester?._id !== user._id && data.requester !== user._id) {
@@ -125,12 +118,10 @@ const RequestApprovalDetailPage = () => {
         if (!window.confirm(`Bạn có chắc chắn muốn ${actionText} yêu cầu này?`)) return;
 
         try {
-            const token = localStorage.getItem('token');
             const endpoint = status === 'approve' ? 'approve' : 'reject';
 
-            await axios.put(`${API_URL}/api/change-requests/${id}/${endpoint}`,
-                { note: reviewNote },
-                { headers: { Authorization: `Bearer ${token}` } }
+            await api.put(`/change-requests/${id}/${endpoint}`,
+                { note: reviewNote }
             );
 
             alert(`Đã ${actionText} thành công!`);

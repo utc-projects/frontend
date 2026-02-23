@@ -19,7 +19,7 @@ let DefaultIcon = L.icon({
 
 L.Marker.prototype.options.icon = DefaultIcon;
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+const API_URL = import.meta.env.VITE_API_URL;
 
 const PointsPage = () => {
     const navigate = useNavigate();
@@ -572,8 +572,8 @@ const PointsPage = () => {
                                                 key={p}
                                                 onClick={() => setPage(p)}
                                                 className={`min-w-[32px] h-8 flex items-center justify-center rounded-lg text-sm font-medium transition-colors ${page === p
-                                                        ? 'bg-emerald-500 text-white shadow-emerald-500/30 shadow-sm'
-                                                        : 'text-slate-600 hover:bg-slate-50 border border-transparent hover:border-slate-200'
+                                                    ? 'bg-emerald-500 text-white shadow-emerald-500/30 shadow-sm'
+                                                    : 'text-slate-600 hover:bg-slate-50 border border-transparent hover:border-slate-200'
                                                     }`}
                                             >
                                                 {p}
