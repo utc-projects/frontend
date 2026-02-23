@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0ea5e9"/>
+      <stop offset="100%" stop-color="#0d9488"/>
+    </linearGradient>
+  </defs>
+  <!-- Rounded square background -->
+  <rect width="64" height="64" rx="14" fill="url(#bg)"/>
+  <!-- Globe circle -->
+  <circle cx="32" cy="34" r="16" stroke="white" stroke-width="2.5" fill="none"/>
+  <!-- Globe horizontal lines -->
+  <ellipse cx="32" cy="34" rx="16" ry="6" stroke="white" stroke-width="1.5" fill="none"/>
+  <!-- Globe vertical arc -->
+  <ellipse cx="32" cy="34" rx="6" ry="16" stroke="white" stroke-width="1.5" fill="none"/>
+  <!-- Globe center line -->
+  <line x1="16" y1="34" x2="48" y2="34" stroke="white" stroke-width="1.5"/>
+  <!-- Airplane -->
+  <g transform="translate(38, 16) rotate(30)">
+    <path d="M0 0 L-4 3 L0 2 L4 3 Z" fill="white"/>
+    <path d="M0 2 L-2 6 L0 5 L2 6 Z" fill="white"/>
+  </g>
+  <!-- Airplane trail dots -->
+  <circle cx="44" cy="14" r="1.2" fill="white" opacity="0.8"/>
+  <circle cx="47" cy="13" r="0.9" fill="white" opacity="0.5"/>
+  <circle cx="49.5" cy="12.5" r="0.6" fill="white" opacity="0.3"/>
+</svg>
