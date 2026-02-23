@@ -274,7 +274,7 @@ function UsersPage() {
                             </span>
                             Quản lý Users
                         </h1>
-                        <p className="text-slate-500 text-lg ml-1">Quản lý tài khoản và phân quyền người dùng ({totalItems})</p>
+                        <p className="text-slate-500 text-lg ml-1">Quản lý tài khoản và phân quyền người dùng</p>
                     </div>
 
                     <div className="flex flex-col md:flex-row gap-3">
