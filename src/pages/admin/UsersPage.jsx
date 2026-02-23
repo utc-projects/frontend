@@ -33,6 +33,7 @@ function UsersPage() {
     const [modalOpen, setModalOpen] = useState(false);
     const [editingUser, setEditingUser] = useState(null);
     const [deleteConfirm, setDeleteConfirm] = useState(null);
+    const [toggleActiveConfirm, setToggleActiveConfirm] = useState(null);
     const [saving, setSaving] = useState(false);
     const [formData, setFormData] = useState({
         name: '',
@@ -178,6 +179,7 @@ function UsersPage() {
     const handleToggleActive = async (userId) => {
         try {
             await api.put(`/auth/users/${userId}/toggle-active`);
+            setToggleActiveConfirm(null);
             fetchUsers();
         } catch (error) {
             console.error('Error toggling user status:', error);
@@ -365,7 +367,7 @@ function UsersPage() {
                                                     {canEdit && (
                                                         <>
                                                             <button
-                                                                onClick={() => handleToggleActive(user._id)}
+                                                                onClick={() => setToggleActiveConfirm(user)}
                                                                 className={`p-2 rounded-lg transition-colors ${user.isActive
                                                                     ? 'text-slate-400 hover:text-orange-600 hover:bg-orange-50'
                                                                     : 'text-slate-400 hover:text-emerald-600 hover:bg-emerald-50'
@@ -470,8 +472,8 @@ function UsersPage() {
                                                 key={p}
                                                 onClick={() => setPage(p)}
                                                 className={`min-w-[32px] h-8 flex items-center justify-center rounded-lg text-sm font-medium transition-colors ${page === p
-                                                        ? 'bg-rose-500 text-white shadow-rose-500/30 shadow-sm'
-                                                        : 'text-slate-600 hover:bg-slate-50 border border-transparent hover:border-slate-200'
+                                                    ? 'bg-rose-500 text-white shadow-rose-500/30 shadow-sm'
+                                                    : 'text-slate-600 hover:bg-slate-50 border border-transparent hover:border-slate-200'
                                                     }`}
                                             >
                                                 {p}
@@ -664,6 +666,45 @@ function UsersPage() {
                                     className="flex-1 px-4 py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl font-medium transition-all"
                                 >
                                     Xóa
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
+
+            {/* Toggle Active Confirmation Modal */}
+            {
+                toggleActiveConfirm && (
+                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                        <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl p-6 text-center">
+                            <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${toggleActiveConfirm.isActive ? 'bg-orange-100' : 'bg-emerald-100'}`}>
+                                {toggleActiveConfirm.isActive
+                                    ? <XCircle className="w-8 h-8 text-orange-600" />
+                                    : <CheckCircle className="w-8 h-8 text-emerald-600" />
+                                }
+                            </div>
+                            <h3 className="text-lg font-bold text-slate-800 mb-2">
+                                {toggleActiveConfirm.isActive ? 'Xác nhận vô hiệu hóa' : 'Xác nhận kích hoạt'}
+                            </h3>
+                            <p className="text-slate-500 mb-6">
+                                Bạn có chắc chắn muốn {toggleActiveConfirm.isActive ? 'vô hiệu hóa' : 'kích hoạt'} người dùng <strong>{toggleActiveConfirm.name}</strong>?
+                            </p>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => setToggleActiveConfirm(null)}
+                                    className="flex-1 px-4 py-3 text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl font-medium transition-all"
+                                >
+                                    Hủy
+                                </button>
+                                <button
+                                    onClick={() => handleToggleActive(toggleActiveConfirm._id)}
+                                    className={`flex-1 px-4 py-3 text-white rounded-xl font-medium transition-all ${toggleActiveConfirm.isActive
+                                            ? 'bg-orange-500 hover:bg-orange-600'
+                                            : 'bg-emerald-500 hover:bg-emerald-600'
+                                        }`}
+                                >
+                                    {toggleActiveConfirm.isActive ? 'Vô hiệu hóa' : 'Kích hoạt'}
                                 </button>
                             </div>
                         </div>
