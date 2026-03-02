@@ -7,6 +7,7 @@ const EstimateList = () => {
     const [estimates, setEstimates] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('All');
 
     // Pagination State
@@ -17,25 +18,20 @@ const EstimateList = () => {
 
     const navigate = useNavigate();
 
-    // Debounce search
+    // Debounce search input only
     useEffect(() => {
         const delayDebounceFn = setTimeout(() => {
-            setPage(1); // Reset page on search change
-            fetchEstimates();
+            setDebouncedSearchTerm(searchTerm);
+            setPage(1); // Reset page when user changes search term
         }, 500);
 
         return () => clearTimeout(delayDebounceFn);
     }, [searchTerm]);
 
-    // Fetch on filter/page change
+    // Fetch data (single source of truth)
     useEffect(() => {
         fetchEstimates();
-    }, [page, limit, statusFilter]);
-
-    // Reset page when status filter changes
-    useEffect(() => {
-        setPage(1);
-    }, [statusFilter]);
+    }, [page, limit, statusFilter, debouncedSearchTerm]);
 
     const fetchEstimates = async () => {
         try {
@@ -43,7 +39,7 @@ const EstimateList = () => {
             const params = {
                 page,
                 limit,
-                search: searchTerm,
+                search: debouncedSearchTerm,
                 status: statusFilter
             };
             const res = await api.get('/estimates', { params });
@@ -119,7 +115,10 @@ const EstimateList = () => {
                 />
                 <select
                     value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value)}
+                    onChange={(e) => {
+                        setStatusFilter(e.target.value);
+                        setPage(1);
+                    }}
                     className="border-l border-gray-200 pl-4 py-1.5 text-sm text-gray-600 bg-transparent outline-none cursor-pointer hover:text-blue-600"
                 >
                     <option value="All">Tất cả trạng thái</option>

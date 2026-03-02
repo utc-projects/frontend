@@ -63,6 +63,11 @@ const CurrencyInput = ({ value, onChange, className = "", readOnly = false }) =>
     );
 };
 
+const toNumber = (value) => {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+};
+
 // --- MAIN FORM ---
 
 const EstimateForm = () => {
@@ -90,14 +95,113 @@ const EstimateForm = () => {
 
     const payingGuests = Math.max(0, general.guestsCount - general.paxFOC);
 
+    const calcRevenueTotal = (item) => {
+        const paxAdult = toNumber(item.paxAdult);
+        const priceAdult = toNumber(item.priceAdult);
+        const paxChild = toNumber(item.paxChild);
+        const childPrice = priceAdult / 2;
+        const paxOther = toNumber(item.paxOther);
+        const priceOther = toNumber(item.priceOther);
+        return (paxAdult * priceAdult) + (paxChild * childPrice) + (paxOther * priceOther);
+    };
+
+    const calcRestaurantTotal = (item) => toNumber(item.pax) * toNumber(item.sessions) * toNumber(item.price);
+    const calcHotelTotal = (item) => toNumber(item.roomQty) * toNumber(item.nights) * toNumber(item.price);
+    const calcTicketTotal = (item) => toNumber(item.pax) * toNumber(item.price);
+    const calcTransportTotal = (item) => toNumber(item.qty) * toNumber(item.days || 1) * toNumber(item.price);
+    const calcOtherTotal = (item) => {
+        const qty = toNumber(item.qty || 1);
+        const price = toNumber(item.price);
+        const paxFactor = item.usePax ? toNumber(item.pax || 0) : 1;
+        const multiplier = toNumber(item.multiplier || 1);
+        return qty * price * paxFactor * multiplier;
+    };
+
+    const normalizeRevenueItem = (item = {}) => {
+        const normalized = {
+            name: item.name || '',
+            paxAdult: toNumber(item.paxAdult),
+            priceAdult: toNumber(item.priceAdult),
+            paxChild: toNumber(item.paxChild),
+            priceChild: toNumber(item.priceAdult) / 2,
+            paxOther: toNumber(item.paxOther),
+            priceOther: toNumber(item.priceOther),
+        };
+        return { ...normalized, totalAmount: calcRevenueTotal(normalized) };
+    };
+
+    const normalizeRestaurantItem = (item = {}) => {
+        const normalized = {
+            provider: item.provider || '',
+            mealType: item.mealType || 'Trưa',
+            pax: toNumber(item.pax),
+            sessions: toNumber(item.sessions || 1),
+            price: toNumber(item.price),
+        };
+        return { ...normalized, total: calcRestaurantTotal(normalized) };
+    };
+
+    const normalizeHotelItem = (item = {}) => {
+        const normalized = {
+            hotel: item.hotel || '',
+            roomType: item.roomType || 'TWN',
+            roomQty: toNumber(item.roomQty || 1),
+            nights: toNumber(item.nights || 1),
+            price: toNumber(item.price),
+        };
+        return { ...normalized, total: calcHotelTotal(normalized) };
+    };
+
+    const normalizeTicketItem = (item = {}) => {
+        const normalized = {
+            location: item.location || '',
+            object: item.object || 'NL',
+            pax: toNumber(item.pax),
+            price: toNumber(item.price),
+        };
+        return { ...normalized, total: calcTicketTotal(normalized) };
+    };
+
+    const normalizeTransportItem = (item = {}) => {
+        const normalized = {
+            name: item.name || '',
+            type: item.type || '45 chỗ',
+            qty: toNumber(item.qty || 1),
+            days: toNumber(item.days || 1),
+            price: toNumber(item.price),
+        };
+        return { ...normalized, total: calcTransportTotal(normalized) };
+    };
+
+    const normalizeOtherItem = (item = {}) => {
+        const normalized = {
+            item: item.item || '',
+            qty: toNumber(item.qty || 1),
+            pax: toNumber(item.pax),
+            usePax: Boolean(item.usePax),
+            multiplier: toNumber(item.multiplier || 1),
+            price: toNumber(item.price),
+        };
+        return { ...normalized, total: calcOtherTotal(normalized) };
+    };
+
     // --- EFFECTS ---
     useEffect(() => {
         if (isEditMode) {
             fetchEstimate();
         } else {
-            if (revenueItems.length === 0) setRevenueItems([{ name: 'Tour Fee', paxAdult: 0, priceAdult: 0, paxChild: 0, priceChild: 0, totalAmount: 0 }]);
+            if (revenueItems.length === 0) {
+                setRevenueItems([normalizeRevenueItem({
+                    name: 'Tour Fee',
+                    paxAdult: payingGuests,
+                    priceAdult: 0,
+                    paxChild: 0,
+                    paxOther: 0,
+                    priceOther: 0
+                })]);
+            }
         }
-    }, [id]);
+    }, [id, isEditMode, payingGuests]);
 
     useEffect(() => {
         if (general.startDate && general.endDate) {
@@ -127,12 +231,12 @@ const EstimateForm = () => {
                 contact: data.phone || '',
                 status: data.status
             });
-            setRevenueItems(data.revenueItems || []);
-            setRestaurants(data.restaurants || []);
-            setHotels(data.hotels || []);
-            setTickets(data.tickets || []);
-            setTransport(data.transport || []);
-            setOthers(data.others || []);
+            setRevenueItems((data.revenueItems || []).map(normalizeRevenueItem));
+            setRestaurants((data.restaurants || []).map(normalizeRestaurantItem));
+            setHotels((data.hotels || []).map(normalizeHotelItem));
+            setTickets((data.tickets || []).map(normalizeTicketItem));
+            setTransport((data.transport || []).map(normalizeTransportItem));
+            setOthers((data.others || []).map(normalizeOtherItem));
         } catch (error) { console.error(error); }
     };
 
@@ -140,12 +244,12 @@ const EstimateForm = () => {
 
     // --- CALCS ---
     const calculateTotals = () => {
-        const revTotal = revenueItems.reduce((acc, item) => acc + item.totalAmount, 0);
-        const restTotal = restaurants.reduce((acc, item) => acc + item.total, 0);
-        const hotelTotal = hotels.reduce((acc, item) => acc + item.total, 0);
-        const ticketTotal = tickets.reduce((acc, item) => acc + item.total, 0);
-        const transTotal = transport.reduce((acc, item) => acc + item.total, 0);
-        const otherTotal = others.reduce((acc, item) => acc + item.total, 0);
+        const revTotal = revenueItems.reduce((acc, item) => acc + calcRevenueTotal(item), 0);
+        const restTotal = restaurants.reduce((acc, item) => acc + calcRestaurantTotal(item), 0);
+        const hotelTotal = hotels.reduce((acc, item) => acc + calcHotelTotal(item), 0);
+        const ticketTotal = tickets.reduce((acc, item) => acc + calcTicketTotal(item), 0);
+        const transTotal = transport.reduce((acc, item) => acc + calcTransportTotal(item), 0);
+        const otherTotal = others.reduce((acc, item) => acc + calcOtherTotal(item), 0);
 
         const costTotal = restTotal + hotelTotal + ticketTotal + transTotal + otherTotal;
         const profit = revTotal - costTotal;
@@ -154,6 +258,11 @@ const EstimateForm = () => {
     };
 
     const totals = calculateTotals();
+    const paymentSchedule = [
+        { label: 'Đặt cọc lần 1 (50%)', amount: totals.revTotal * 0.5 },
+        { label: 'Đặt cọc lần 2 (30%)', amount: totals.revTotal * 0.3 },
+        { label: 'Còn phải thu (20%)', amount: totals.revTotal * 0.2 },
+    ];
 
     const validate = () => {
         const newErrors = {};
@@ -177,10 +286,30 @@ const EstimateForm = () => {
         e.preventDefault();
         if (!validate()) return;
 
+        const normalizedRevenueItems = revenueItems.map(normalizeRevenueItem);
+        const normalizedRestaurants = restaurants.map(normalizeRestaurantItem);
+        const normalizedHotels = hotels.map(normalizeHotelItem);
+        const normalizedTickets = tickets.map(normalizeTicketItem);
+        const normalizedTransport = transport.map(normalizeTransportItem);
+        const normalizedOthers = others.map(normalizeOtherItem);
+
         const payload = {
             ...general, duration: general.days, phone: general.contact,
-            revenueItems, restaurants, hotels, tickets, transport, others,
-            totalRevenue: totals.revTotal, totalNetCost: totals.costTotal, expectedProfit: totals.profit
+            revenueItems: normalizedRevenueItems,
+            restaurants: normalizedRestaurants,
+            hotels: normalizedHotels,
+            tickets: normalizedTickets,
+            transport: normalizedTransport,
+            others: normalizedOthers,
+            paymentSchedule: paymentSchedule.map((entry) => ({
+                content: entry.label,
+                amount: entry.amount,
+                status: 'pending',
+            })),
+            totalRevenue: totals.revTotal,
+            totalNetCost: totals.costTotal,
+            totalNtCost: totals.costTotal,
+            expectedProfit: totals.profit
         };
         try {
             if (isEditMode) {
@@ -300,9 +429,13 @@ const EstimateForm = () => {
                             <thead className="bg-slate-50 text-slate-500 font-semibold text-xs uppercase">
                                 <tr>
                                     <th className="px-3 py-2 text-left">Nội dung</th>
-                                    <th className="px-3 py-2 text-center w-24">Số lượng</th>
-                                    <th className="px-3 py-2 text-right w-40">Đơn giá</th>
-                                    <th className="px-3 py-2 text-right w-40">Thành tiền</th>
+                                    <th className="px-3 py-2 text-center w-20">NL pax</th>
+                                    <th className="px-3 py-2 text-right w-28">Giá NL</th>
+                                    <th className="px-3 py-2 text-center w-20">TE pax</th>
+                                    <th className="px-3 py-2 text-right w-28">Giá TE</th>
+                                    <th className="px-3 py-2 text-center w-20">EB pax</th>
+                                    <th className="px-3 py-2 text-right w-28">Giá EB</th>
+                                    <th className="px-3 py-2 text-right w-36">Thành tiền</th>
                                     <th className="w-10"></th>
                                 </tr>
                             </thead>
@@ -310,15 +443,27 @@ const EstimateForm = () => {
                                 {revenueItems.map((item, i) => (
                                     <tr key={i} className="hover:bg-slate-50/50">
                                         <td className="p-2"><input type="text" className="w-full bg-transparent outline-none font-medium text-slate-700" value={item.name} onChange={e => updateItem(setRevenueItems, revenueItems, i, 'name', e.target.value)} /></td>
-                                        <td className="p-2 text-center"><input type="number" className="w-full text-center bg-transparent outline-none" value={item.paxAdult} onChange={e => updateItem(setRevenueItems, revenueItems, i, 'paxAdult', Number(e.target.value), r => r.totalAmount = r.paxAdult * r.priceAdult + r.paxChild * r.priceChild)} /></td>
-                                        <td className="p-2 text-right"><CurrencyInput value={item.priceAdult} onChange={v => updateItem(setRevenueItems, revenueItems, i, 'priceAdult', v, r => r.totalAmount = r.paxAdult * r.priceAdult + r.paxChild * r.priceChild)} /></td>
-                                        <td className="p-2 text-right font-bold text-slate-700">{item.totalAmount.toLocaleString()}</td>
+                                        <td className="p-2 text-center"><input type="number" className="w-full text-center bg-transparent outline-none" value={item.paxAdult} onChange={e => updateItem(setRevenueItems, revenueItems, i, 'paxAdult', Number(e.target.value), r => { r.priceChild = toNumber(r.priceAdult) / 2; r.totalAmount = calcRevenueTotal(r); })} /></td>
+                                        <td className="p-2 text-right"><CurrencyInput value={item.priceAdult} onChange={v => updateItem(setRevenueItems, revenueItems, i, 'priceAdult', v, r => { r.priceChild = toNumber(r.priceAdult) / 2; r.totalAmount = calcRevenueTotal(r); })} /></td>
+                                        <td className="p-2 text-center"><input type="number" className="w-full text-center bg-transparent outline-none" value={item.paxChild} onChange={e => updateItem(setRevenueItems, revenueItems, i, 'paxChild', Number(e.target.value), r => { r.priceChild = toNumber(r.priceAdult) / 2; r.totalAmount = calcRevenueTotal(r); })} /></td>
+                                        <td className="p-2 text-right"><CurrencyInput value={toNumber(item.priceAdult) / 2} readOnly /></td>
+                                        <td className="p-2 text-center"><input type="number" className="w-full text-center bg-transparent outline-none" value={item.paxOther} onChange={e => updateItem(setRevenueItems, revenueItems, i, 'paxOther', Number(e.target.value), r => { r.priceChild = toNumber(r.priceAdult) / 2; r.totalAmount = calcRevenueTotal(r); })} /></td>
+                                        <td className="p-2 text-right"><CurrencyInput value={item.priceOther} onChange={v => updateItem(setRevenueItems, revenueItems, i, 'priceOther', v, r => { r.priceChild = toNumber(r.priceAdult) / 2; r.totalAmount = calcRevenueTotal(r); })} /></td>
+                                        <td className="p-2 text-right font-bold text-slate-700">{calcRevenueTotal(item).toLocaleString()}</td>
                                         <td className="p-2 text-center"><button onClick={() => removeItem(setRevenueItems, revenueItems, i)} className="text-slate-300 hover:text-red-500"><Trash2 size={16} /></button></td>
                                     </tr>
                                 ))}
                             </tbody>
                         </table>
-                        <button onClick={() => addItem(setRevenueItems, revenueItems, { name: '', paxAdult: payingGuests, priceAdult: 0, paxChild: 0, priceChild: 0, totalAmount: 0 })} className="mt-3 text-xs font-bold text-teal-600 hover:text-teal-700 flex items-center gap-1 uppercase">+ Thêm dòng</button>
+                        <button onClick={() => addItem(setRevenueItems, revenueItems, normalizeRevenueItem({ name: '', paxAdult: payingGuests, priceAdult: 0, paxChild: 0, paxOther: 0, priceOther: 0 }))} className="mt-3 text-xs font-bold text-teal-600 hover:text-teal-700 flex items-center gap-1 uppercase">+ Thêm dòng</button>
+                        <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
+                            {paymentSchedule.map((entry) => (
+                                <div key={entry.label} className="border border-slate-200 rounded-lg px-3 py-2 bg-slate-50">
+                                    <p className="text-[11px] uppercase tracking-wide font-semibold text-slate-500">{entry.label}</p>
+                                    <p className="text-sm font-bold text-slate-800 mt-1">{entry.amount.toLocaleString()}</p>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 </Card>
 
@@ -353,7 +498,7 @@ const EstimateForm = () => {
                                     ))}
                                 </tbody>
                             </table>
-                            <button onClick={() => addItem(setRestaurants, restaurants, { provider: '', mealType: 'trưa', pax: payingGuests, sessions: 1, price: 0, total: 0 })} className="mt-3 text-xs font-bold text-teal-600 hover:text-teal-700 flex items-center gap-1 uppercase">+ Thêm dòng</button>
+                            <button onClick={() => addItem(setRestaurants, restaurants, normalizeRestaurantItem({ provider: '', mealType: 'Trưa', pax: payingGuests, sessions: 1, price: 0 }))} className="mt-3 text-xs font-bold text-teal-600 hover:text-teal-700 flex items-center gap-1 uppercase">+ Thêm dòng</button>
                         </div>
                     </Card>
 
@@ -385,7 +530,7 @@ const EstimateForm = () => {
                                     ))}
                                 </tbody>
                             </table>
-                            <button onClick={() => addItem(setHotels, hotels, { hotel: '', roomType: 'TWN', roomQty: 1, nights: 1, price: 0, total: 0 })} className="mt-3 text-xs font-bold text-teal-600 hover:text-teal-700 flex items-center gap-1 uppercase">+ Thêm dòng</button>
+                            <button onClick={() => addItem(setHotels, hotels, normalizeHotelItem({ hotel: '', roomType: 'TWN', roomQty: 1, nights: 1, price: 0 }))} className="mt-3 text-xs font-bold text-teal-600 hover:text-teal-700 flex items-center gap-1 uppercase">+ Thêm dòng</button>
                         </div>
                     </Card>
 
@@ -415,7 +560,7 @@ const EstimateForm = () => {
                                     ))}
                                 </tbody>
                             </table>
-                            <button onClick={() => addItem(setTickets, tickets, { location: '', object: 'NL', pax: payingGuests, price: 0, total: 0 })} className="mt-3 text-xs font-bold text-teal-600 hover:text-teal-700 flex items-center gap-1 uppercase">+ Thêm dòng</button>
+                            <button onClick={() => addItem(setTickets, tickets, normalizeTicketItem({ location: '', object: 'NL', pax: payingGuests, price: 0 }))} className="mt-3 text-xs font-bold text-teal-600 hover:text-teal-700 flex items-center gap-1 uppercase">+ Thêm dòng</button>
                         </div>
                     </Card>
 
@@ -429,7 +574,9 @@ const EstimateForm = () => {
                                         <th className="px-3 py-2 text-left">Phương tiện</th>
                                         <th className="px-3 py-2 text-center w-24">Loại</th>
                                         <th className="px-3 py-2 text-center w-24">SL</th>
+                                        <th className="px-3 py-2 text-center w-24">Hệ số</th>
                                         <th className="px-3 py-2 text-right w-32">Giá xe</th>
+                                        <th className="px-3 py-2 text-right w-32">Thành tiền</th>
                                         <th className="w-10"></th>
                                     </tr>
                                 </thead>
@@ -438,14 +585,16 @@ const EstimateForm = () => {
                                         <tr key={i} className="hover:bg-slate-50/50">
                                             <td className="p-2"><input className="w-full outline-none bg-transparent" value={item.name} onChange={e => updateItem(setTransport, transport, i, 'name', e.target.value)} placeholder="Tên xe..." /></td>
                                             <td className="p-2"><input className="w-full outline-none bg-transparent text-center" value={item.type} onChange={e => updateItem(setTransport, transport, i, 'type', e.target.value)} /></td>
-                                            <td className="p-2"><input type="number" className="w-full outline-none bg-transparent text-center" value={item.qty} onChange={e => updateItem(setTransport, transport, i, 'qty', Number(e.target.value), r => r.total = r.qty * r.price)} /></td>
-                                            <td className="p-2 text-right"><CurrencyInput value={item.price} onChange={v => updateItem(setTransport, transport, i, 'price', v, r => r.total = r.qty * r.price)} /></td>
+                                            <td className="p-2"><input type="number" className="w-full outline-none bg-transparent text-center" value={item.qty} onChange={e => updateItem(setTransport, transport, i, 'qty', Number(e.target.value), r => r.total = calcTransportTotal(r))} /></td>
+                                            <td className="p-2"><input type="number" className="w-full outline-none bg-transparent text-center" value={item.days || 1} onChange={e => updateItem(setTransport, transport, i, 'days', Number(e.target.value), r => r.total = calcTransportTotal(r))} /></td>
+                                            <td className="p-2 text-right"><CurrencyInput value={item.price} onChange={v => updateItem(setTransport, transport, i, 'price', v, r => r.total = calcTransportTotal(r))} /></td>
+                                            <td className="p-2 text-right font-medium">{calcTransportTotal(item).toLocaleString()}</td>
                                             <td className="p-2 text-center"><button onClick={() => removeItem(setTransport, transport, i)} className="text-slate-300 hover:text-red-500"><Trash2 size={16} /></button></td>
                                         </tr>
                                     ))}
                                 </tbody>
                             </table>
-                            <button onClick={() => addItem(setTransport, transport, { name: '', type: '45 chỗ', qty: 1, price: 0, total: 0 })} className="mt-3 text-xs font-bold text-teal-600 hover:text-teal-700 flex items-center gap-1 uppercase">+ Thêm dòng</button>
+                            <button onClick={() => addItem(setTransport, transport, normalizeTransportItem({ name: '', type: '45 chỗ', qty: 1, days: 1, price: 0 }))} className="mt-3 text-xs font-bold text-teal-600 hover:text-teal-700 flex items-center gap-1 uppercase">+ Thêm dòng</button>
                         </div>
                     </Card>
 
@@ -459,6 +608,8 @@ const EstimateForm = () => {
                                         <th className="px-3 py-2 text-left">Hạng mục</th>
                                         <th className="px-3 py-2 text-center w-24">Số lượng</th>
                                         <th className="px-3 py-2 text-center w-24">Pax</th>
+                                        <th className="px-3 py-2 text-center w-24">Áp pax</th>
+                                        <th className="px-3 py-2 text-center w-24">Hệ số</th>
                                         <th className="px-3 py-2 text-right w-32">Đơn giá</th>
                                         <th className="px-3 py-2 text-right w-32">Thành tiền</th>
                                         <th className="w-10"></th>
@@ -468,18 +619,26 @@ const EstimateForm = () => {
                                     {others.map((item, i) => (
                                         <tr key={i} className="hover:bg-slate-50/50">
                                             <td className="p-2"><input className="w-full outline-none bg-transparent" value={item.item} onChange={e => updateItem(setOthers, others, i, 'item', e.target.value)} placeholder="Tên chi phí..." /></td>
-                                            <td className="p-2"><input type="number" className="w-full outline-none bg-transparent text-center" value={item.qty} onChange={e => updateItem(setOthers, others, i, 'qty', Number(e.target.value), r => r.total = r.qty * r.price)} /></td>
-                                            <td className="p-2"><input type="number" className="w-full outline-none bg-transparent text-center" value={item.pax} onChange={e => updateItem(setOthers, others, i, 'pax', Number(e.target.value))} /></td>
-                                            <td className="p-2 text-right"><CurrencyInput value={item.price} onChange={v => updateItem(setOthers, others, i, 'price', v, r => r.total = r.qty * r.price)} /></td>
+                                            <td className="p-2"><input type="number" className="w-full outline-none bg-transparent text-center" value={item.qty} onChange={e => updateItem(setOthers, others, i, 'qty', Number(e.target.value), r => r.total = calcOtherTotal(r))} /></td>
+                                            <td className="p-2"><input type="number" className="w-full outline-none bg-transparent text-center" value={item.pax} onChange={e => updateItem(setOthers, others, i, 'pax', Number(e.target.value), r => r.total = calcOtherTotal(r))} /></td>
+                                            <td className="p-2 text-center">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={Boolean(item.usePax)}
+                                                    onChange={e => updateItem(setOthers, others, i, 'usePax', e.target.checked, r => r.total = calcOtherTotal(r))}
+                                                />
+                                            </td>
+                                            <td className="p-2"><input type="number" className="w-full outline-none bg-transparent text-center" value={item.multiplier || 1} onChange={e => updateItem(setOthers, others, i, 'multiplier', Number(e.target.value), r => r.total = calcOtherTotal(r))} /></td>
+                                            <td className="p-2 text-right"><CurrencyInput value={item.price} onChange={v => updateItem(setOthers, others, i, 'price', v, r => r.total = calcOtherTotal(r))} /></td>
                                             <td className="p-2 text-right font-medium relative">
-                                                {item.total.toLocaleString()}
+                                                {calcOtherTotal(item).toLocaleString()}
                                             </td>
                                             <td className="p-2 text-center"><button onClick={() => removeItem(setOthers, others, i)} className="text-slate-300 hover:text-red-500"><Trash2 size={16} /></button></td>
                                         </tr>
                                     ))}
                                 </tbody>
                             </table>
-                            <button onClick={() => addItem(setOthers, others, { item: '', qty: 1, pax: payingGuests, price: 0, total: 0 })} className="mt-3 text-xs font-bold text-teal-600 hover:text-teal-700 flex items-center gap-1 uppercase">+ Thêm dòng</button>
+                            <button onClick={() => addItem(setOthers, others, normalizeOtherItem({ item: '', qty: 1, pax: payingGuests, usePax: false, multiplier: 1, price: 0 }))} className="mt-3 text-xs font-bold text-teal-600 hover:text-teal-700 flex items-center gap-1 uppercase">+ Thêm dòng</button>
                         </div>
                     </Card>
 
