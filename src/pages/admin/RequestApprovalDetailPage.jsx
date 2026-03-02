@@ -411,34 +411,6 @@ const RequestApprovalDetailPage = () => {
                                 {type === 'route' && renderRouteContent(data)}
                             </div>
 
-                            {/* Actions in Main Content (Mobile/Tablet friendly fallback) */}
-                            {(isAdmin || isLecturer) && request.status === 'pending' && (
-                                <div className="p-8 border-t border-slate-100 bg-slate-50">
-                                    <h3 className="text-lg font-bold text-slate-800 mb-4">Phê duyệt yêu cầu</h3>
-                                    <div className="flex gap-4">
-                                        <button
-                                            onClick={() => handleAction('reject')}
-                                            className="flex-1 py-3 bg-white border border-rose-200 text-rose-600 rounded-xl font-bold hover:bg-rose-50 transition-all shadow-sm flex items-center justify-center gap-2"
-                                        >
-                                            <XCircle className="w-5 h-5" /> Từ chối
-                                        </button>
-                                        <button
-                                            onClick={() => handleAction('approve')}
-                                            className="flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-500/30 transition-all flex items-center justify-center gap-2"
-                                        >
-                                            <CheckCircle className="w-5 h-5" /> Phê duyệt
-                                        </button>
-                                    </div>
-                                    <textarea
-                                        className="w-full mt-4 border border-slate-300 rounded-xl p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none shadow-sm bg-white"
-                                        rows="2"
-                                        placeholder="Ghi chú xử lý (bắt buộc)..."
-                                        value={reviewNote}
-                                        onChange={e => setReviewNote(e.target.value)}
-                                        required
-                                    ></textarea>
-                                </div>
-                            )}
                         </div>
                     </div>
 
