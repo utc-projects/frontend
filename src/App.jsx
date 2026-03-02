@@ -5,7 +5,6 @@ import NotificationManager from './components/NotificationManager';
 import MainLayout from './components/MainLayout';
 import { ProtectedRoute, AdminRoute, LecturerRoute, StudentRoute, PermissionRoute } from './components/ProtectedRoute';
 import LoginPage from './pages/auth/LoginPage';
-import RegisterPage from './pages/auth/RegisterPage';
 import DashboardPage from './pages/dashboard/DashboardPage';
 import MapPage from './pages/MapPage';
 import UsersPage from './pages/admin/UsersPage';
@@ -28,9 +27,9 @@ function App() {
         <NotificationManager />
         <Router>
           <Routes>
-            {/* Public routes - only login/register */}
+            {/* Public routes */}
             <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
+            <Route path="/register" element={<Navigate to="/login" replace />} />
 
             {/* Protected routes - require authentication */}
             <Route path="/dashboard" element={

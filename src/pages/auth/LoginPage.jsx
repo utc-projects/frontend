@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { Map, Mail, Lock, User, GraduationCap, Crown } from 'lucide-react';
+import { Map, Mail, Lock } from 'lucide-react';
 
 function LoginPage() {
     const [email, setEmail] = useState('');
@@ -118,69 +118,6 @@ function LoginPage() {
                         </button>
                     </form>
 
-                    <div className="mt-8 text-center">
-                        <p className="text-slate-500 text-sm font-medium">
-                            Chưa có tài khoản?{' '}
-                            <Link to="/register" className="text-cyan-600 hover:text-cyan-700 font-bold hover:underline">
-                                Đăng ký miễn phí
-                            </Link>
-                        </p>
-                    </div>
-                </div>
-
-                {/* Demo Accounts */}
-                <div className="mt-8">
-                    <p className="text-xs text-slate-400 text-center mb-4 uppercase tracking-widest font-semibold">Tài khoản trải nghiệm</p>
-                    <div className="grid grid-cols-3 gap-3">
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setEmail('admin@tourism.edu.vn');
-                                setPassword('admin123');
-                            }}
-                            className="flex flex-col items-center gap-2 p-3 bg-white border border-slate-200 rounded-2xl hover:border-purple-300 hover:bg-purple-50 transition-all group"
-                        >
-                            <div className="p-2 bg-purple-100 text-purple-600 rounded-xl group-hover:scale-110 transition-transform">
-                                <Crown className="w-4 h-4" />
-                            </div>
-                            <span className="text-xs font-semibold text-slate-600 group-hover:text-purple-700">Admin</span>
-                        </button>
-
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setEmail('giangvien@tourism.edu.vn');
-                                setPassword('lecturer123');
-                            }}
-                            className="flex flex-col items-center gap-2 p-3 bg-white border border-slate-200 rounded-2xl hover:border-cyan-300 hover:bg-cyan-50 transition-all group"
-                        >
-                            <div className="p-2 bg-cyan-100 text-cyan-600 rounded-xl group-hover:scale-110 transition-transform">
-                                <User className="w-4 h-4" />
-                            </div>
-                            <span className="text-xs font-semibold text-slate-600 group-hover:text-cyan-700">Giảng viên</span>
-                        </button>
-
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setEmail('sinhvien1@tourism.edu.vn');
-                                setPassword('student123');
-                            }}
-                            className="flex flex-col items-center gap-2 p-3 bg-white border border-slate-200 rounded-2xl hover:border-emerald-300 hover:bg-emerald-50 transition-all group"
-                        >
-                            <div className="p-2 bg-emerald-100 text-emerald-600 rounded-xl group-hover:scale-110 transition-transform">
-                                <GraduationCap className="w-4 h-4" />
-                            </div>
-                            <span className="text-xs font-semibold text-slate-600 group-hover:text-emerald-700">Sinh viên</span>
-                        </button>
-                    </div>
-                </div>
-
-                {/* Back to home */}
-                <div className="text-center mt-8">
-                    <Link to="/" className="text-slate-400 hover:text-slate-600 text-sm font-medium transition-colors">
-                        ← Quay lại trang chủ
-                    </Link>
                 </div>
             </div>
         </div>
