@@ -176,7 +176,8 @@ function MapComponent({ selectedRoute, onRouteSelect, selectedLocation }) {
             try {
                 setLoading(true);
                 const [pointsData, routesData, routesGeoData, providersData] = await Promise.all([
-                    mapService.getPoints(),
+                    // Map needs the full point dataset so route points are always visible.
+                    mapService.getPoints({ page: 1, limit: 10000 }),
                     mapService.getRoutes(),
                     mapService.getAllRoutesGeoJSON(),
                     mapService.getProviders(),
