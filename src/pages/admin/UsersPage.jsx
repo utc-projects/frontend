@@ -318,7 +318,7 @@ function UsersPage() {
                                 className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white rounded-xl text-sm font-semibold shadow-lg shadow-rose-500/20 transition-all whitespace-nowrap"
                             >
                                 <Plus className="w-4 h-4" />
-                                Theo User
+                                Thêm mới
                             </button>
                         )}
                     </div>
