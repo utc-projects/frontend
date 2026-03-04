@@ -6,7 +6,8 @@ import api from '../../services/api';
 
 function DashboardPage() {
     const { user, loading, isAdmin, isLecturer, checkPermission } = useAuth();
-    const [stats, setStats] = useState({ routes: 0, points: 0, providers: 0 });
+    const [stats, setStats] = useState({ routes: null, points: null, providers: null });
+    const [statsLoading, setStatsLoading] = useState(true);
 
     const [showWelcome, setShowWelcome] = useState(() => {
         const flag = sessionStorage.getItem('justLoggedIn');
@@ -18,20 +19,34 @@ function DashboardPage() {
     });
 
     useEffect(() => {
+        let isMounted = true;
+
         const fetchStats = async () => {
+            if (loading || !user) return;
+            setStatsLoading(true);
+
             try {
                 const [routesRes, pointsRes, providersRes] = await Promise.all([
                     api.get('/routes'),
                     api.get('/points'),
                     api.get('/providers'),
                 ]);
+
+                if (!isMounted) return;
+
                 setStats({
                     routes: Array.isArray(routesRes.data) ? routesRes.data.length : 0,
                     points: pointsRes.data.pagination?.totalItems || pointsRes.data.features?.length || 0,
                     providers: providersRes.data.pagination?.totalItems || providersRes.data.features?.length || 0,
                 });
             } catch (err) {
+                if (!isMounted) return;
                 console.error('Failed to fetch stats:', err);
+                setStats({ routes: null, points: null, providers: null });
+            } finally {
+                if (isMounted) {
+                    setStatsLoading(false);
+                }
             }
         };
         fetchStats();
@@ -42,9 +57,10 @@ function DashboardPage() {
         }, 5000);
 
         return () => {
+            isMounted = false;
             clearTimeout(timer);
         };
-    }, []);
+    }, [loading, user]);
 
     if (loading) {
         return (
@@ -60,6 +76,15 @@ function DashboardPage() {
 
     // Only Admin and Lecturer can see management features
     const canManage = isAdmin || isLecturer;
+    const renderStatValue = (value) => {
+        if (statsLoading) {
+            return <div className="h-8 w-16 rounded-lg bg-slate-200 animate-pulse" />;
+        }
+        if (value === null || value === undefined) {
+            return '---';
+        }
+        return value;
+    };
 
     return (
         <div className="min-h-screen bg-slate-50/50 font-sans">
@@ -97,7 +122,7 @@ function DashboardPage() {
                             <Waypoints className="w-8 h-8" />
                         </div>
                         <div>
-                            <p className="text-3xl font-extrabold text-slate-800">{stats.routes}</p>
+                            <p className="text-3xl font-extrabold text-slate-800">{renderStatValue(stats.routes)}</p>
                             <p className="text-sm text-slate-500 font-medium uppercase tracking-wide">Tuyến du lịch</p>
                         </div>
                     </div>
@@ -106,7 +131,7 @@ function DashboardPage() {
                             <MapPin className="w-8 h-8" />
                         </div>
                         <div>
-                            <p className="text-3xl font-extrabold text-slate-800">{stats.points}</p>
+                            <p className="text-3xl font-extrabold text-slate-800">{renderStatValue(stats.points)}</p>
                             <p className="text-sm text-slate-500 font-medium uppercase tracking-wide">Điểm du lịch</p>
                         </div>
                     </div>
@@ -115,7 +140,7 @@ function DashboardPage() {
                             <Building2 className="w-8 h-8" />
                         </div>
                         <div>
-                            <p className="text-3xl font-extrabold text-slate-800">{stats.providers}</p>
+                            <p className="text-3xl font-extrabold text-slate-800">{renderStatValue(stats.providers)}</p>
                             <p className="text-sm text-slate-500 font-medium uppercase tracking-wide">Nhà cung cấp DV</p>
                         </div>
                     </div>
