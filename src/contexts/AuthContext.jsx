@@ -28,32 +28,37 @@ export const AuthProvider = ({ children }) => {
         }
     }, [token]);
 
-    // Load user on mount
-    useEffect(() => {
-        const loadUser = async () => {
-            if (token) {
+    const loadUser = async () => {
+        if (token) {
+            try {
+                const response = await api.get('/auth/me');
+                setUser(response.data.user);
+
+                // Fetch permissions
                 try {
-                    const response = await api.get('/auth/me');
-                    setUser(response.data.user);
-
-                    // Fetch permissions
-                    try {
-                        const permResponse = await api.get('/permissions/my-permissions');
-                        setPermissions(permResponse.data.data);
-                    } catch (permErr) {
-                        console.error('Failed to load permissions:', permErr);
-                        setPermissions({ role: response.data.user.role, resources: {} });
-                    }
-                } catch (error) {
-                    console.error('Failed to load user:', error);
-                    setToken(null);
-                    setUser(null);
-                    setPermissions(null);
+                    const permResponse = await api.get('/permissions/my-permissions');
+                    setPermissions(permResponse.data.data);
+                } catch (permErr) {
+                    console.error('Failed to load permissions:', permErr);
+                    setPermissions({ role: response.data.user.role, resources: {} });
                 }
+            } catch (error) {
+                console.error('Failed to load user:', error);
+                setToken(null);
+                setUser(null);
+                setPermissions(null);
             }
-            setLoading(false);
-        };
+        } else {
+            setUser(null);
+            setPermissions(null);
+        }
 
+        setLoading(false);
+    };
+
+    // Load user on mount and when token changes
+    useEffect(() => {
+        setLoading(true);
         loadUser();
     }, [token]);
 
@@ -108,6 +113,7 @@ export const AuthProvider = ({ children }) => {
         login,
         register,
         logout,
+        loadUser,
         updateProfile,
         permissions,
         checkPermission,
