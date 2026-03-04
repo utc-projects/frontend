@@ -185,37 +185,10 @@ const EstimateForm = () => {
         return { ...normalized, total: calcOtherTotal(normalized) };
     };
 
-    // --- EFFECTS ---
-    useEffect(() => {
-        if (isEditMode) {
-            fetchEstimate();
-        } else {
-            if (revenueItems.length === 0) {
-                setRevenueItems([normalizeRevenueItem({
-                    name: 'Tour Fee',
-                    paxAdult: payingGuests,
-                    priceAdult: 0,
-                    paxChild: 0,
-                    paxOther: 0,
-                    priceOther: 0
-                })]);
-            }
-        }
-    }, [id, isEditMode, payingGuests]);
-
-    useEffect(() => {
-        if (general.startDate && general.endDate) {
-            const start = new Date(general.startDate);
-            const end = new Date(general.endDate);
-            const diffTime = Math.abs(end - start);
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-            setGeneral(prev => ({ ...prev, days: diffDays > 0 ? diffDays : 0 }));
-        }
-    }, [general.startDate, general.endDate]);
-
-    const fetchEstimate = async () => {
+    const fetchEstimate = async (options = { cancelled: false }) => {
         try {
             const res = await api.get(`/estimates/${id}`);
+            if (options.cancelled) return;
             const data = res.data.data;
             setGeneral({
                 code: data.code,
@@ -239,6 +212,46 @@ const EstimateForm = () => {
             setOthers((data.others || []).map(normalizeOtherItem));
         } catch (error) { console.error(error); }
     };
+
+    // --- EFFECTS ---
+    useEffect(() => {
+        if (!isEditMode) {
+            return undefined;
+        }
+
+        const options = { cancelled: false };
+        fetchEstimate(options);
+        return () => {
+            options.cancelled = true;
+        };
+    }, [id, isEditMode]);
+
+    useEffect(() => {
+        if (isEditMode) {
+            return;
+        }
+
+        if (revenueItems.length === 0) {
+            setRevenueItems([normalizeRevenueItem({
+                name: 'Tour Fee',
+                paxAdult: payingGuests,
+                priceAdult: 0,
+                paxChild: 0,
+                paxOther: 0,
+                priceOther: 0
+            })]);
+        }
+    }, [isEditMode, payingGuests, revenueItems.length]);
+
+    useEffect(() => {
+        if (general.startDate && general.endDate) {
+            const start = new Date(general.startDate);
+            const end = new Date(general.endDate);
+            const diffTime = Math.abs(end - start);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+            setGeneral(prev => ({ ...prev, days: diffDays > 0 ? diffDays : 0 }));
+        }
+    }, [general.startDate, general.endDate]);
 
     // --- PRINTING REMOVED ---
 
