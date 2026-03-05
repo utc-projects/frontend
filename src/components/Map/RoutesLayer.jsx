@@ -1,4 +1,5 @@
-import { GeoJSON } from 'react-leaflet';
+import { GeoJSON, Marker } from 'react-leaflet';
+import L from 'leaflet';
 
 // Color palette for different routes
 const ROUTE_COLORS = [
@@ -34,6 +35,57 @@ function RoutesLayer({ data, selectedRoute, onRouteSelect }) {
       dashArray: isSelected ? null : '10, 5',
     };
   };
+
+  const createDirectionIcon = (angle, color, isSelected) => new L.DivIcon({
+    className: `route-direction-arrow ${isSelected ? 'selected' : ''}`,
+    html: `
+      <div style="
+        width: 18px;
+        height: 18px;
+        transform: rotate(${angle}deg);
+        opacity: ${isSelected ? 0.95 : 0.8};
+      ">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M3 12H18" stroke="${color}" stroke-width="2.5" stroke-linecap="round" />
+          <path d="M14 7L20 12L14 17" stroke="${color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </div>
+    `,
+    iconSize: [18, 18],
+    iconAnchor: [9, 9],
+  });
+
+  const directionMarkers = [];
+  if (selectedRoute && data?.features) {
+    data.features.forEach((feature) => {
+      if (feature?.properties?._id !== selectedRoute) return;
+      const coordinates = feature?.geometry?.coordinates || [];
+      if (coordinates.length < 2) return;
+
+      const routeColor = routeColorMap[feature.properties._id] || '#8b5cf6';
+      const segmentCount = coordinates.length - 1;
+      const arrowTarget = Math.min(10, Math.max(3, Math.floor(segmentCount / 3)));
+      const step = Math.max(1, Math.floor(segmentCount / arrowTarget));
+
+      for (let index = step; index < coordinates.length; index += step) {
+        const prev = coordinates[Math.max(0, index - step)];
+        const curr = coordinates[index];
+        if (!prev || !curr) continue;
+
+        const lngDelta = curr[0] - prev[0];
+        const latDelta = curr[1] - prev[1];
+        if (lngDelta === 0 && latDelta === 0) continue;
+
+        const angle = Math.atan2(latDelta, lngDelta) * (180 / Math.PI);
+        directionMarkers.push({
+          id: `${feature.properties._id}-arrow-${index}`,
+          position: [curr[1], curr[0]],
+          angle,
+          color: routeColor,
+        });
+      }
+    });
+  }
 
   const onEachFeature = (feature, layer) => {
 
@@ -109,12 +161,23 @@ function RoutesLayer({ data, selectedRoute, onRouteSelect }) {
   };
 
   return (
-    <GeoJSON
-      key={selectedRoute || 'routes'} // Force re-render when selection changes
-      data={data}
-      style={routeStyle}
-      onEachFeature={onEachFeature}
-    />
+    <>
+      <GeoJSON
+        key={selectedRoute || 'routes'} // Force re-render when selection changes
+        data={data}
+        style={routeStyle}
+        onEachFeature={onEachFeature}
+      />
+      {directionMarkers.map((marker) => (
+        <Marker
+          key={marker.id}
+          position={marker.position}
+          icon={createDirectionIcon(marker.angle, marker.color, true)}
+          interactive={false}
+          zIndexOffset={700}
+        />
+      ))}
+    </>
   );
 }
 

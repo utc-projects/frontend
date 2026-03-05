@@ -3,6 +3,59 @@ import { Link } from 'react-router-dom';
 import mapService from '../../services/mapService';
 import { Map, ChevronLeft, ChevronRight, Clock, ArrowLeft, MapPin, ChevronDown, Navigation } from 'lucide-react';
 
+const getCoords = (point) => point?.location?.coordinates || point?.coordinates || null;
+
+const calculateDistanceKm = (coordA, coordB) => {
+    if (!coordA || !coordB) return 0;
+    const [lng1, lat1] = coordA;
+    const [lng2, lat2] = coordB;
+    const R = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLng = (lng2 - lng1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+        Math.sin(dLng / 2) * Math.sin(dLng / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+};
+
+const formatMinutes = (minutes) => {
+    if (!Number.isFinite(minutes) || minutes <= 0) return null;
+    const h = Math.floor(minutes / 60);
+    const m = Math.round(minutes % 60);
+    if (h === 0) return `${m} phút`;
+    if (m === 0) return `${h} giờ`;
+    return `${h} giờ ${m} phút`;
+};
+
+const buildLegs = (route) => {
+    if (!route?.points || route.points.length < 2) return [];
+
+    const legs = [];
+    for (let index = 1; index < route.points.length; index += 1) {
+        const from = route.points[index - 1];
+        const to = route.points[index];
+        const distanceKm = calculateDistanceKm(getCoords(from), getCoords(to));
+        legs.push({
+            id: `${from._id || index - 1}-${to._id || index}`,
+            fromName: from.name || `Điểm ${index}`,
+            toName: to.name || `Điểm ${index + 1}`,
+            distanceKm,
+        });
+    }
+
+    const totalLegDistance = legs.reduce((sum, leg) => sum + leg.distanceKm, 0);
+    return legs.map((leg) => {
+        if (!route.roadDuration || totalLegDistance <= 0) {
+            return { ...leg, estimatedMinutes: null };
+        }
+        return {
+            ...leg,
+            estimatedMinutes: Math.round((route.roadDuration * leg.distanceKm) / totalLegDistance),
+        };
+    });
+};
+
 function Sidebar({ selectedRoute, onRouteSelect }) {
     const [routes, setRoutes] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -82,6 +135,7 @@ function Sidebar({ selectedRoute, onRouteSelect }) {
                 ) : (
                     routes.map((route) => {
                         const isSelected = selectedRoute === route._id;
+                        const legs = buildLegs(route);
                         return (
                             <div
                                 key={route._id}
@@ -123,33 +177,17 @@ function Sidebar({ selectedRoute, onRouteSelect }) {
                                 {/* Points List - Expandable */}
                                 {isSelected && route.points && route.points.length > 0 && (
                                     <div className="border-t border-cyan-100 bg-cyan-50/30 p-3">
-                                        <p className="text-xs font-semibold text-cyan-700 mb-2 flex items-center gap-1">
-                                            <MapPin className="w-3 h-3" />
-                                            Lộ trình chi tiết
-                                        </p>
+                                        <div className="flex items-center justify-between mb-2">
+                                            <p className="text-xs font-semibold text-cyan-700 flex items-center gap-1">
+                                                <MapPin className="w-3 h-3" />
+                                                Lộ trình chi tiết
+                                            </p>
+                                        </div>
                                         <div className="space-y-0">
                                             {route.points.map((point, index) => {
-                                                // Calculate distance from previous point using Haversine formula
-                                                let distanceFromPrev = 0;
-                                                if (index > 0) {
-                                                    const prevPoint = route.points[index - 1];
-                                                    const getCoords = (p) => p.location?.coordinates || p.coordinates;
-                                                    const prevCoords = getCoords(prevPoint);
-                                                    const currCoords = getCoords(point);
-
-                                                    if (prevCoords && currCoords) {
-                                                        const [lng1, lat1] = prevCoords;
-                                                        const [lng2, lat2] = currCoords;
-                                                        const R = 6371; // Earth's radius in km
-                                                        const dLat = (lat2 - lat1) * Math.PI / 180;
-                                                        const dLng = (lng2 - lng1) * Math.PI / 180;
-                                                        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                                                            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-                                                            Math.sin(dLng / 2) * Math.sin(dLng / 2);
-                                                        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-                                                        distanceFromPrev = R * c;
-                                                    }
-                                                }
+                                                const distanceFromPrev = index > 0
+                                                    ? calculateDistanceKm(getCoords(route.points[index - 1]), getCoords(point))
+                                                    : 0;
 
                                                 return (
                                                     <div key={point._id || index}>
@@ -196,6 +234,25 @@ function Sidebar({ selectedRoute, onRouteSelect }) {
                                                 );
                                             })}
                                         </div>
+
+                                        {legs.length > 0 && (
+                                            <div className="mt-3 pt-3 border-t border-cyan-100">
+                                                <p className="text-xs font-semibold text-slate-600 mb-2">Các chặng di chuyển</p>
+                                                <div className="space-y-1.5">
+                                                    {legs.map((leg, index) => (
+                                                        <div key={leg.id} className="rounded-lg border border-slate-200 bg-white/80 px-2.5 py-2">
+                                                            <p className="text-[11px] font-semibold text-slate-700">
+                                                                Chặng {index + 1}: {leg.fromName} → {leg.toName}
+                                                            </p>
+                                                            <p className="text-[11px] text-slate-500 mt-0.5">
+                                                                {leg.distanceKm.toFixed(1)} km
+                                                                {leg.estimatedMinutes ? ` • ~${formatMinutes(leg.estimatedMinutes)}` : ''}
+                                                            </p>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
                             </div>
