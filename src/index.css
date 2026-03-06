@@ -64,3 +64,174 @@ body {
   background: rgba(0, 0, 0, 0.45);
   color: white !important;
 }
+
+/* Route point popup styles */
+.route-step-popup .leaflet-popup-content-wrapper {
+  padding: 0;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.25);
+}
+
+.route-step-popup .leaflet-popup-content {
+  margin: 0 !important;
+}
+
+.route-step-popup .leaflet-popup-tip {
+  background: #ffffff;
+}
+
+.route-step-popup .leaflet-popup-close-button {
+  width: 30px !important;
+  height: 30px !important;
+  font-size: 22px !important;
+  line-height: 28px !important;
+  color: #ffffff !important;
+  background: rgba(15, 23, 42, 0.28);
+  border-radius: 50%;
+  top: 10px !important;
+  right: 10px !important;
+  padding: 0 !important;
+  text-align: center;
+  transition: background 0.2s ease;
+}
+
+.route-step-popup .leaflet-popup-close-button:hover {
+  background: rgba(15, 23, 42, 0.5);
+}
+
+.route-step-popup-card {
+  width: min(84vw, 320px);
+  background: linear-gradient(180deg, #f8fbff 0%, #ffffff 36%);
+}
+
+.route-step-popup-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 14px 50px 14px 16px;
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.route-step-popup-head--start {
+  background: linear-gradient(135deg, #0ea862, #0f9a5b);
+}
+
+.route-step-popup-head--middle {
+  background: linear-gradient(135deg, #1d9bf0, #2563eb);
+}
+
+.route-step-popup-head--end {
+  background: linear-gradient(135deg, #f04f4f, #dc2626);
+}
+
+.route-step-popup-head-label {
+  font-size: 21px;
+  line-height: 1.2;
+  letter-spacing: 0.15px;
+}
+
+.route-step-popup-head-order {
+  flex: 0 0 auto;
+  font-size: 12px;
+  line-height: 1;
+  font-weight: 700;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.route-step-popup-body {
+  padding: 16px;
+  color: #0f172a;
+}
+
+.route-step-popup-title {
+  margin: 0 0 10px;
+  font-size: 31px;
+  line-height: 1.15;
+  letter-spacing: -0.2px;
+  color: #1e293b;
+}
+
+.route-step-popup-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.route-step-popup-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 5px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #075985;
+  background: #dff4ff;
+}
+
+.route-step-popup-chip--muted {
+  color: #475569;
+  background: #eef2f6;
+}
+
+.route-step-popup-progress {
+  margin-bottom: 12px;
+}
+
+.route-step-popup-progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 7px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #334155;
+}
+
+.route-step-popup-progress-track {
+  height: 9px;
+  border-radius: 999px;
+  background: #e2e8f0;
+  overflow: hidden;
+}
+
+.route-step-popup-progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  transition: width 0.25s ease;
+}
+
+.route-step-popup-progress-fill--start {
+  background: linear-gradient(90deg, #22c55e, #16a34a);
+}
+
+.route-step-popup-progress-fill--middle {
+  background: linear-gradient(90deg, #38bdf8, #2563eb);
+}
+
+.route-step-popup-progress-fill--end {
+  background: linear-gradient(90deg, #fb7185, #ef4444);
+}
+
+.route-step-popup-route {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #334155;
+}
+
+@media (max-width: 640px) {
+  .route-step-popup-head-label {
+    font-size: 18px;
+  }
+
+  .route-step-popup-title {
+    font-size: 26px;
+  }
+}

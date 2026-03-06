@@ -1,6 +1,12 @@
 import { Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 
+const getPointType = (index, total) => {
+    if (index === 0) return 'start';
+    if (index === total - 1) return 'end';
+    return 'middle';
+};
+
 const getPointTypeLabel = (index, total) => {
     if (index === 0) return 'Điểm bắt đầu';
     if (index === total - 1) return 'Điểm kết thúc';
@@ -8,11 +14,10 @@ const getPointTypeLabel = (index, total) => {
 };
 
 const createStepIcon = (index, total) => {
-    const isStart = index === 0;
-    const isEnd = index === total - 1;
-    const gradient = isStart
+    const pointType = getPointType(index, total);
+    const gradient = pointType === 'start'
         ? 'linear-gradient(135deg, #10b981, #059669)'
-        : isEnd
+        : pointType === 'end'
             ? 'linear-gradient(135deg, #ef4444, #dc2626)'
             : 'linear-gradient(135deg, #0ea5e9, #2563eb)';
 
@@ -60,44 +65,61 @@ function RouteEndpointsMarkers({ routes, selectedRoute }) {
 
     return (
         <>
-            {validPoints.map((point, index) => (
-                <Marker
-                    key={point._id || `${point.name}-${index}`}
-                    position={[point.location.coordinates[1], point.location.coordinates[0]]}
-                    icon={createStepIcon(index, validPoints.length)}
-                    zIndexOffset={index === 0 || index === validPoints.length - 1 ? 1200 : 900}
-                >
-                    <Popup>
-                        <div style={{ minWidth: '220px', fontFamily: 'system-ui, sans-serif' }}>
-                            <div style={{
-                                background: index === 0
-                                    ? 'linear-gradient(135deg, #10b981, #059669)'
-                                    : index === validPoints.length - 1
-                                        ? 'linear-gradient(135deg, #ef4444, #dc2626)'
-                                        : 'linear-gradient(135deg, #0ea5e9, #2563eb)',
-                                padding: '10px 14px',
-                                margin: '-10px -10px 10px -10px',
-                                borderRadius: '4px 4px 0 0',
-                            }}>
-                                <span style={{ color: 'white', fontWeight: 600, fontSize: '14px' }}>
-                                    {getPointTypeLabel(index, validPoints.length)}
-                                </span>
+            {validPoints.map((point, index) => {
+                const pointType = getPointType(index, validPoints.length);
+                const progressPercent = Math.max(
+                    0,
+                    Math.min(100, Math.round(((index + 1) / validPoints.length) * 100)),
+                );
+
+                return (
+                    <Marker
+                        key={point._id || `${point.name}-${index}`}
+                        position={[point.location.coordinates[1], point.location.coordinates[0]]}
+                        icon={createStepIcon(index, validPoints.length)}
+                        zIndexOffset={index === 0 || index === validPoints.length - 1 ? 1200 : 900}
+                    >
+                        <Popup className="route-step-popup" maxWidth={320}>
+                            <div className="route-step-popup-card">
+                                <div className={`route-step-popup-head route-step-popup-head--${pointType}`}>
+                                    <span className="route-step-popup-head-label">{getPointTypeLabel(index, validPoints.length)}</span>
+                                    <span className="route-step-popup-head-order">#{index + 1}/{validPoints.length}</span>
+                                </div>
+
+                                <div className="route-step-popup-body">
+                                    <h4 className="route-step-popup-title">{point.name}</h4>
+
+                                    <div className="route-step-popup-meta">
+                                        <span className="route-step-popup-chip">{point.category || 'Điểm tham quan'}</span>
+                                        <span className="route-step-popup-chip route-step-popup-chip--muted">
+                                            Thứ tự #{index + 1}
+                                        </span>
+                                    </div>
+
+                                    <div className="route-step-popup-progress">
+                                        <div className="route-step-popup-progress-header">
+                                            <span>Lộ trình tuyến</span>
+                                            <span>{progressPercent}%</span>
+                                        </div>
+                                        <div className="route-step-popup-progress-track">
+                                            <div
+                                                className={`route-step-popup-progress-fill route-step-popup-progress-fill--${pointType}`}
+                                                style={{ width: `${progressPercent}%` }}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {route.routeName && (
+                                        <p className="route-step-popup-route">
+                                            Tuyến: <strong>{route.routeName}</strong>
+                                        </p>
+                                    )}
+                                </div>
                             </div>
-                            <div style={{ padding: '0 4px' }}>
-                                <h4 style={{ margin: '0 0 4px 0', fontSize: '16px', fontWeight: 600, color: '#1e293b' }}>
-                                    {point.name}
-                                </h4>
-                                <p style={{ margin: '0 0 2px 0', fontSize: '12px', color: '#64748b' }}>
-                                    {point.category || 'Điểm tham quan'}
-                                </p>
-                                <p style={{ margin: 0, fontSize: '12px', color: '#0f172a', fontWeight: 600 }}>
-                                    Thứ tự tuyến: #{index + 1}
-                                </p>
-                            </div>
-                        </div>
-                    </Popup>
-                </Marker>
-            ))}
+                        </Popup>
+                    </Marker>
+                );
+            })}
         </>
     );
 }
